@@ -18,6 +18,7 @@ namespace CustomRP.Runtime {
         public void Render(ScriptableRenderContext context, Camera renderingCamera) {
             this._context = context;
             this._camera = renderingCamera;
+            PrepareForSceneWindow();
             if (!Cull()) {
                 return;
             }

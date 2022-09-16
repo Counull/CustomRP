@@ -6,6 +6,8 @@ namespace CustomRP.Runtime {
     public partial class CameraRenderer {
         partial void DrawUnsupportedShaders();
         partial void DrawGizmos();
+
+        partial void PrepareForSceneWindow();
 #if UNITY_EDITOR
         private static Material _errorMaterial;
 
@@ -42,6 +44,12 @@ namespace CustomRP.Runtime {
             if (Handles.ShouldRenderGizmos()) {
                 _context.DrawGizmos(_camera, GizmoSubset.PreImageEffects);
                 _context.DrawGizmos(_camera, GizmoSubset.PostImageEffects);
+            }
+        }
+
+        partial void PrepareForSceneWindow() {
+            if (_camera.cameraType == CameraType.SceneView) {
+                ScriptableRenderContext.EmitWorldGeometryForSceneView(_camera);
             }
         }
 
