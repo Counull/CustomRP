@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 
 namespace CustomRP.Runtime {
@@ -8,7 +9,11 @@ namespace CustomRP.Runtime {
         partial void DrawGizmos();
 
         partial void PrepareForSceneWindow();
+        partial void PrepareBuffer();
+
+
 #if UNITY_EDITOR
+        private string SampleName { get; set; }
         private static Material _errorMaterial;
 
         static readonly ShaderTagId[] LegacyShaderTagIds = {
@@ -53,6 +58,16 @@ namespace CustomRP.Runtime {
             }
         }
 
+        partial void PrepareBuffer() {
+            Profiler.BeginSample("Editor Only");
+
+            _buffer.name = SampleName = _camera.name;
+            Profiler.EndSample();
+        }
+
+
+#else
+  const string SampleName = BufferName;
 #endif
     }
 }

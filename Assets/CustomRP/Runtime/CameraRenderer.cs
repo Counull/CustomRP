@@ -18,6 +18,7 @@ namespace CustomRP.Runtime {
         public void Render(ScriptableRenderContext context, Camera renderingCamera) {
             this._context = context;
             this._camera = renderingCamera;
+            PrepareBuffer();
             PrepareForSceneWindow();
             if (!Cull()) {
                 return;
@@ -48,14 +49,16 @@ namespace CustomRP.Runtime {
         }
 
         private void Setup() {
+            CameraClearFlags flags = _camera.clearFlags;
             _context.SetupCameraProperties(_camera);
-            _buffer.ClearRenderTarget(true, true, Color.clear);
-            _buffer.BeginSample(BufferName);
+            _buffer.ClearRenderTarget(flags <= CameraClearFlags.Depth, flags == CameraClearFlags.Color,
+                flags == CameraClearFlags.Color ? _camera.backgroundColor.linear : Color.clear);
+            _buffer.BeginSample(SampleName);
             ExecuteBuffer();
         }
 
         private void Submit() {
-            _buffer.EndSample(BufferName);
+            _buffer.EndSample(SampleName);
             ExecuteBuffer();
             _context.Submit();
         }

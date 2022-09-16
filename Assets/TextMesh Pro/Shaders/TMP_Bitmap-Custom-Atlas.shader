@@ -103,8 +103,9 @@ SubShader{
 
 			fixed4 faceColor = v.color;
 			faceColor *= _FaceColor;
-
+		
 			v2f OUT;
+			
 			OUT.vertex = vPosition;
 			OUT.color = faceColor;
 			OUT.texcoord0 = v.texcoord0;
@@ -122,7 +123,7 @@ SubShader{
 		fixed4 frag (v2f IN) : SV_Target
 		{
 			fixed4 color = tex2D(_MainTex, IN.texcoord0) * tex2D(_FaceTex, IN.texcoord1) * IN.color;
-
+		 
 			// Alternative implementation to UnityGet2DClipping with support for softness.
 			#if UNITY_UI_CLIP_RECT
 				half2 m = saturate((_ClipRect.zw - _ClipRect.xy - abs(IN.mask.xy)) * IN.mask.zw);
