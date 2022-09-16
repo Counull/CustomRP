@@ -3,12 +3,24 @@ using UnityEngine.Rendering;
 
 namespace CustomRP.Runtime {
     public class CameraRenderer : MonoBehaviour {
+        private static Material _errorMaterial;
+        private static readonly ShaderTagId UnlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
+
+
         private ScriptableRenderContext _context;
         private Camera _camera;
         private CullingResults _cullingResults;
         private const string BufferName = "Render Camera";
 
-        private static ShaderTagId _unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
+        static ShaderTagId[] legacyShaderTagIds = {
+            new ShaderTagId("Always"),
+            new ShaderTagId("ForwardBase"),
+            new ShaderTagId("PrepassBase"),
+            new ShaderTagId("Vertex"),
+            new ShaderTagId("VertexLMRGBM"),
+            new ShaderTagId("VertexLM")
+        };
+
 
         readonly CommandBuffer _buffer = new CommandBuffer {
             name = BufferName
@@ -23,15 +35,25 @@ namespace CustomRP.Runtime {
 
             Setup();
             DrawVisibleGeometry();
+            DrawUnsupportedShaders();
             Submit();
         }
 
         private void DrawVisibleGeometry() {
+            //Draw Opaque
             var sortingSettings = new SortingSettings(_camera) {criteria = SortingCriteria.CommonOpaque};
-            var drawingSettings = new DrawingSettings(_unlitShaderTagId, sortingSettings);
-            var filteringSettings = new FilteringSettings(RenderQueueRange.all);
+            var drawingSettings = new DrawingSettings(UnlitShaderTagId, sortingSettings);
+            var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
             _context.DrawRenderers(_cullingResults, ref drawingSettings, ref filteringSettings);
+
+            //Draw Sky Box
             _context.DrawSkybox(_camera);
+
+            //Draw Transparent
+            sortingSettings.criteria = SortingCriteria.CommonTransparent;
+            drawingSettings.sortingSettings = sortingSettings;
+            filteringSettings.renderQueueRange = RenderQueueRange.transparent;
+            _context.DrawRenderers(_cullingResults, ref drawingSettings, ref filteringSettings);
         }
 
         private void Setup() {
@@ -59,6 +81,24 @@ namespace CustomRP.Runtime {
             }
 
             return false;
+        }
+
+        void DrawUnsupportedShaders() {
+            if (_errorMaterial == null) {
+                _errorMaterial = new Material(Shader.Find("Hidden/InternalErrorShader"));
+            }
+
+
+            var drawingSettings = new DrawingSettings(
+                    legacyShaderTagIds[0], new SortingSettings(_camera)
+                ) {overrideMaterial = _errorMaterial};
+
+            for (int i = 1; i < legacyShaderTagIds.Length; i++) {
+                drawingSettings.SetShaderPassName(i, legacyShaderTagIds[i]);
+            }
+
+            var filteringSettings = FilteringSettings.defaultValue;
+            _context.DrawRenderers(_cullingResults, ref drawingSettings, ref filteringSettings);
         }
     }
 }
