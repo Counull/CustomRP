@@ -2,24 +2,13 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace CustomRP.Runtime {
-    public class CameraRenderer : MonoBehaviour {
-        private static Material _errorMaterial;
-        private static readonly ShaderTagId UnlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
-
-
+    public partial class CameraRenderer {
         private ScriptableRenderContext _context;
         private Camera _camera;
         private CullingResults _cullingResults;
         private const string BufferName = "Render Camera";
 
-        static ShaderTagId[] legacyShaderTagIds = {
-            new ShaderTagId("Always"),
-            new ShaderTagId("ForwardBase"),
-            new ShaderTagId("PrepassBase"),
-            new ShaderTagId("Vertex"),
-            new ShaderTagId("VertexLMRGBM"),
-            new ShaderTagId("VertexLM")
-        };
+        private static readonly ShaderTagId UnlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
 
 
         readonly CommandBuffer _buffer = new CommandBuffer {
@@ -36,6 +25,7 @@ namespace CustomRP.Runtime {
             Setup();
             DrawVisibleGeometry();
             DrawUnsupportedShaders();
+            DrawGizmos();
             Submit();
         }
 
@@ -81,24 +71,6 @@ namespace CustomRP.Runtime {
             }
 
             return false;
-        }
-
-        void DrawUnsupportedShaders() {
-            if (_errorMaterial == null) {
-                _errorMaterial = new Material(Shader.Find("Hidden/InternalErrorShader"));
-            }
-
-
-            var drawingSettings = new DrawingSettings(
-                    legacyShaderTagIds[0], new SortingSettings(_camera)
-                ) {overrideMaterial = _errorMaterial};
-
-            for (int i = 1; i < legacyShaderTagIds.Length; i++) {
-                drawingSettings.SetShaderPassName(i, legacyShaderTagIds[i]);
-            }
-
-            var filteringSettings = FilteringSettings.defaultValue;
-            _context.DrawRenderers(_cullingResults, ref drawingSettings, ref filteringSettings);
         }
     }
 }
