@@ -15,7 +15,8 @@ namespace CustomRP.Runtime {
             name = BufferName
         };
 
-        public void Render(ScriptableRenderContext context, Camera renderingCamera) {
+        public void Render(ScriptableRenderContext context, Camera renderingCamera, bool useDynamicBatching,
+            bool useGPUInstancing) {
             this._context = context;
             this._camera = renderingCamera;
             PrepareBuffer();
@@ -25,19 +26,18 @@ namespace CustomRP.Runtime {
             }
 
             Setup();
-            DrawVisibleGeometry();
+            DrawVisibleGeometry(useDynamicBatching, useGPUInstancing);
             DrawUnsupportedShaders();
             DrawGizmos();
             Submit();
         }
 
-        private void DrawVisibleGeometry() {
+        private void DrawVisibleGeometry(bool useDynamicBatching, bool useGPUInstancing) {
             //Draw Opaque
             var sortingSettings = new SortingSettings(_camera) {criteria = SortingCriteria.CommonOpaque};
-            var drawingSettings = new DrawingSettings(UnlitShaderTagId, sortingSettings)
-            {
-                enableDynamicBatching = true,
-                enableInstancing = false
+            var drawingSettings = new DrawingSettings(UnlitShaderTagId, sortingSettings) {
+                enableDynamicBatching = useDynamicBatching,
+                enableInstancing = useGPUInstancing
             };
             var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
             _context.DrawRenderers(_cullingResults, ref drawingSettings, ref filteringSettings);
