@@ -6,7 +6,7 @@ namespace CustomRP.Runtime {
         private readonly CameraRenderer _renderer = new();
 
         public CustomRenderPipeline() {
-           GraphicsSettings.useScriptableRenderPipelineBatching = true;
+           GraphicsSettings.useScriptableRenderPipelineBatching = false;
         }
 
         protected override void Render(ScriptableRenderContext context, Camera[] cameras) {

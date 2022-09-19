@@ -34,7 +34,11 @@ namespace CustomRP.Runtime {
         private void DrawVisibleGeometry() {
             //Draw Opaque
             var sortingSettings = new SortingSettings(_camera) {criteria = SortingCriteria.CommonOpaque};
-            var drawingSettings = new DrawingSettings(UnlitShaderTagId, sortingSettings);
+            var drawingSettings = new DrawingSettings(UnlitShaderTagId, sortingSettings)
+            {
+                enableDynamicBatching = true,
+                enableInstancing = false
+            };
             var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
             _context.DrawRenderers(_cullingResults, ref drawingSettings, ref filteringSettings);
 
