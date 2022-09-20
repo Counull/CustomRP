@@ -9,21 +9,22 @@ using Random = UnityEngine.Random;
 [DisallowMultipleComponent]
 public class PerObjectMaterialProperties : MonoBehaviour {
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+  
+    static readonly int CutoffId = Shader.PropertyToID("_Cutoff");
     static MaterialPropertyBlock _block;
     [SerializeField] Color baseColor = Color.white;
-
+    
+    [SerializeField, Range(0f, 1f)]
+    float cutoff = 0.5f;
+    
     private void Awake() {
         OnValidate();
     }
 
     private void OnValidate() {
         _block ??= new MaterialPropertyBlock();
-
-
-        baseColor.r = Random.value;
-        baseColor.g = Random.value;
-        baseColor.b = Random.value;
         _block.SetColor(BaseColorId, baseColor);
+        _block.SetFloat(CutoffId, cutoff);
         GetComponent<Renderer>().SetPropertyBlock(_block);
     }
 

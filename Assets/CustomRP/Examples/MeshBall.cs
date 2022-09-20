@@ -5,7 +5,7 @@ using UnityEngine;
 public class MeshBall : MonoBehaviour
 {
     
-    static int _baseColorId = Shader.PropertyToID("_BaseColor");
+    static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
     
     [SerializeField]
     Mesh mesh = default;
@@ -23,10 +23,11 @@ public class MeshBall : MonoBehaviour
        var center= GetComponent<Transform>().transform.position;
         for (int i = 0; i <  _matrices.Length; i++) {
             _matrices[i] = Matrix4x4.TRS(
-                Random.insideUnitSphere * 10f+center , Quaternion.identity, Vector3.one
+                Random.insideUnitSphere * 10f+center ,  Quaternion.Euler(Random.value * 360f, Random.value * 360f, Random.value * 360f),
+                Vector3.one*Random.Range(0.5f, 1.5f)
             );
             _baseColors[i] =
-                new Vector4(Random.value, Random.value, Random.value, 1f);
+                new Vector4(Random.value, Random.value, Random.value, Random.Range(0.5f, 1f));
         }
     }
     
@@ -40,7 +41,8 @@ public class MeshBall : MonoBehaviour
     void Update()
     {
         _block ??= new MaterialPropertyBlock();
-        _block .SetVectorArray(_baseColorId,  _baseColors);
+        _block .SetVectorArray(BaseColorId,  _baseColors);
+       
         Graphics.DrawMeshInstanced(mesh, 0, material, _matrices, 1023, _block);
     }
 }
