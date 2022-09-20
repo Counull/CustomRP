@@ -11,6 +11,8 @@ namespace CustomRP.Runtime {
         private static readonly ShaderTagId UnlitShaderTagId = new("SRPDefaultUnlit");
         private static readonly ShaderTagId LitShaderTagId = new("CustomLit");
 
+        Lighting _lighting = new();
+        
         readonly CommandBuffer _buffer = new CommandBuffer {
             name = BufferName
         };
@@ -26,6 +28,7 @@ namespace CustomRP.Runtime {
             }
 
             Setup();
+            _lighting.Setup(context);
             DrawVisibleGeometry(useDynamicBatching, useGPUInstancing);
             DrawUnsupportedShaders();
             DrawGizmos();

@@ -8,13 +8,13 @@
 #define UNITY_MATRIX_V unity_MatrixV
 #define UNITY_MATRIX_VP unity_MatrixVP
 #define UNITY_MATRIX_P glstate_matrix_projection
-#define  UNITY_PREV_MATRIX_M  unity_ObjectToWorld  //记住这个BUG之源
-#define UNITY_PREV_MATRIX_I_M unity_WorldToObject
+
+// 虽然我不知道这俩是个什么玩意但是被我在UnityInstancing.hlsl里找到了相同的定义
+#define  UNITY_PREV_MATRIX_M unity_PrevObjectToWorldArray   
+#define UNITY_PREV_MATRIX_I_M unity_PrevWorldToObjectArray
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl"
-
-
 
 
 #endif
