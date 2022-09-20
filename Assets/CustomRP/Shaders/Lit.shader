@@ -17,18 +17,19 @@ Shader "Custom RP/Lit"
 
         Pass
         {
-               Tags
+            Tags
             {
                 "LightMode" = "CustomLit"
             }
             Blend [_SrcBlend] [_DstBlend]
             ZWrite [_ZWrite]
             HLSLPROGRAM
-            #include "LitPass.hlsl"
+            #pragma target 3.5
             #pragma shader_feature _CLIPPING
             #pragma multi_compile_instancing
             #pragma vertex LitPassVertex
             #pragma fragment  LitPassFragment
+            #include "LitPass.hlsl"
             ENDHLSL
         }
     }
