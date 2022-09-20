@@ -543,7 +543,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7559980805857c4b910d3ccdc310c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseColor: {r: 0.7615578, g: 0.55000573, b: 0.47301418, a: 1}
+  baseColor: {r: 1, g: 0.97351444, b: 0, a: 1}
   cutoff: 0.711
 --- !u!135 &373000463
 SphereCollider:
