@@ -28,7 +28,7 @@ namespace CustomRP.Runtime {
             }
 
             Setup();
-            _lighting.Setup(context);
+            _lighting.Setup(context,_cullingResults);
             DrawVisibleGeometry(useDynamicBatching, useGPUInstancing);
             DrawUnsupportedShaders();
             DrawGizmos();
