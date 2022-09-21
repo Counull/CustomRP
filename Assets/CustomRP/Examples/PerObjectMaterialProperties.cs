@@ -3,20 +3,23 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 
 [DisallowMultipleComponent]
 public class PerObjectMaterialProperties : MonoBehaviour {
-    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-  
-    static readonly int CutoffId = Shader.PropertyToID("_Cutoff");
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"),
+        metallicId = Shader.PropertyToID("_Metallic"),
+        smoothnessId = Shader.PropertyToID("_Smoothness"),
+        CutoffId = Shader.PropertyToID("_Cutoff");
+
     static MaterialPropertyBlock _block;
     [SerializeField] Color baseColor = Color.white;
-    
-    [SerializeField, Range(0f, 1f)]
-    float cutoff = 0.5f;
-    
+
+    [SerializeField, Range(0f, 1f)] float alphaCutoff = 0.5f;
+    [SerializeField, Range(0f, 1f)] float metallic = 0f, smoothness = 0.5f;
+
     private void Awake() {
         OnValidate();
     }
@@ -24,7 +27,9 @@ public class PerObjectMaterialProperties : MonoBehaviour {
     private void OnValidate() {
         _block ??= new MaterialPropertyBlock();
         _block.SetColor(BaseColorId, baseColor);
-        _block.SetFloat(CutoffId, cutoff);
+        _block.SetFloat(CutoffId, alphaCutoff);
+        _block.SetFloat(metallicId, metallic);
+        _block.SetFloat(smoothnessId, smoothness);
         GetComponent<Renderer>().SetPropertyBlock(_block);
     }
 

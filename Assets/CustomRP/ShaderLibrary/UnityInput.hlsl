@@ -16,5 +16,5 @@ float4x4 unity_MatrixV;
 float4x4 unity_PrevObjectToWorldArray;
 float4x4 unity_PrevWorldToObjectArray;
 float4x4 glstate_matrix_projection;
-
+float3 _WorldSpaceCameraPos;
 #endif
