@@ -10,8 +10,8 @@ using Random = UnityEngine.Random;
 [DisallowMultipleComponent]
 public class PerObjectMaterialProperties : MonoBehaviour {
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"),
-        metallicId = Shader.PropertyToID("_Metallic"),
-        smoothnessId = Shader.PropertyToID("_Smoothness"),
+        MetallicId = Shader.PropertyToID("_Metallic"),
+        SmoothnessId = Shader.PropertyToID("_Smoothness"),
         CutoffId = Shader.PropertyToID("_Cutoff");
 
     static MaterialPropertyBlock _block;
@@ -28,8 +28,8 @@ public class PerObjectMaterialProperties : MonoBehaviour {
         _block ??= new MaterialPropertyBlock();
         _block.SetColor(BaseColorId, baseColor);
         _block.SetFloat(CutoffId, alphaCutoff);
-        _block.SetFloat(metallicId, metallic);
-        _block.SetFloat(smoothnessId, smoothness);
+        _block.SetFloat(MetallicId, metallic);
+        _block.SetFloat(SmoothnessId, smoothness);
         GetComponent<Renderer>().SetPropertyBlock(_block);
     }
 
