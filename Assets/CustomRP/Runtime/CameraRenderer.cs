@@ -11,27 +11,33 @@ namespace CustomRP.Runtime {
         private static readonly ShaderTagId UnlitShaderTagId = new("SRPDefaultUnlit");
         private static readonly ShaderTagId LitShaderTagId = new("CustomLit");
 
-        Lighting _lighting = new();
-        
+        readonly Lighting _lighting = new();
+
         readonly CommandBuffer _buffer = new CommandBuffer {
             name = BufferName
         };
 
         public void Render(ScriptableRenderContext context, Camera renderingCamera, bool useDynamicBatching,
-            bool useGPUInstancing) {
+            bool useGPUInstancing, ShadowSettings shadowSettings) {
             this._context = context;
             this._camera = renderingCamera;
             PrepareBuffer();
             PrepareForSceneWindow();
-            if (!Cull()) {
+            if (!Cull(shadowSettings.maxDistance)) {
                 return;
             }
 
+            //渲染光照和阴影
+            _buffer.BeginSample(SampleName);
+            ExecuteBuffer();
+            _lighting.Setup(context, _cullingResults, shadowSettings);
+            _buffer.EndSample(SampleName);
+            
             Setup();
-            _lighting.Setup(context,_cullingResults);
             DrawVisibleGeometry(useDynamicBatching, useGPUInstancing);
             DrawUnsupportedShaders();
             DrawGizmos();
+            _lighting.Cleanup();
             Submit();
         }
 
@@ -76,8 +82,9 @@ namespace CustomRP.Runtime {
             _buffer.Clear();
         }
 
-        bool Cull() {
+        bool Cull(float maxShadowDistance) {
             if (_camera.TryGetCullingParameters(out ScriptableCullingParameters p)) {
+                p.shadowDistance = Mathf.Min(maxShadowDistance, _camera.farClipPlane);
                 _cullingResults = _context.Cull(ref p);
                 return true;
             }

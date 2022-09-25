@@ -10,9 +10,9 @@ namespace CustomRP.Runtime {
         [SerializeField] bool useGPUInstancing = true;
 
          [SerializeField] private bool useSrpBatcher = true;
-
+         [SerializeField] ShadowSettings shadows = default;
         protected override RenderPipeline CreatePipeline() {
-            return new CustomRenderPipeline(useDynamicBatching, useGPUInstancing, useSrpBatcher);
+            return new CustomRenderPipeline(useDynamicBatching, useGPUInstancing, useSrpBatcher,shadows);
         }
     }
 }

@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-
+//***他必须在默认的Namespace里
     public class CustomShaderGUI : ShaderGUI {
         MaterialEditor _editor;
         Object[] _materials;
