@@ -11,12 +11,14 @@ namespace CustomRP.Runtime {
         static readonly int
             DirLightCountId = Shader.PropertyToID("_DirectionalLightCount"),
             DirLightColorsId = Shader.PropertyToID("_DirectionalLightColors"),
-            DirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections");
+            DirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections"),
+            DirLightShadowDataId = Shader.PropertyToID("_DirectionalLightShadowData");
 
 
         static readonly Vector4[]
             DirLightColors = new Vector4[MaxDirLightCount],
-            DirLightDirections = new Vector4[MaxDirLightCount];
+            DirLightDirections = new Vector4[MaxDirLightCount],
+            DirLightShadowData = new Vector4[MaxDirLightCount];
 
         readonly CommandBuffer _buffer = new CommandBuffer {
             name = BufferName
@@ -55,6 +57,7 @@ namespace CustomRP.Runtime {
             _buffer.SetGlobalInt(DirLightCountId, visibleLights.Length);
             _buffer.SetGlobalVectorArray(DirLightColorsId, DirLightColors);
             _buffer.SetGlobalVectorArray(DirLightDirectionsId, DirLightDirections);
+            _buffer.SetGlobalVectorArray(DirLightShadowDataId, DirLightShadowData);
         }
 
 
@@ -72,7 +75,7 @@ namespace CustomRP.Runtime {
             //  |Xz Yz Zz 0|
             //  | 0  0  0 1|
             DirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
-            _shadows.ReserveDirectionalShadows(visibleLight.light, index);
+            DirLightShadowData[index] = _shadows.ReserveDirectionalShadows(visibleLight.light, index);
         }
 
         public void Cleanup() {

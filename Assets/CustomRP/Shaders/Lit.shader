@@ -36,6 +36,7 @@ Shader "Custom RP/Lit"
             #pragma multi_compile_instancing
             #pragma vertex LitPassVertex
             #pragma fragment  LitPassFragment
+            
             #include "LitPass.hlsl"
             ENDHLSL
         }
@@ -54,6 +55,7 @@ Shader "Custom RP/Lit"
             #pragma multi_compile_instancing
             #pragma vertex ShadowCasterPassVertex
             #pragma fragment ShadowCasterPassFragment
+             
             #include "ShadowCasterPass.hlsl"
             ENDHLSL
             
