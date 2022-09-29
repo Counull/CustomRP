@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
+
 namespace CustomRP.Runtime {
     public class Shadows {
         struct ShadowedDirectionalLight {
@@ -8,13 +9,13 @@ namespace CustomRP.Runtime {
         }
 
         const string BufferName = "Shadows";
-        const int MaxShadowedDirectionalLightCount = 4;
+        const int MaxShadowedDirectionalLightCount = 4, MaxCascades = 4;
 
         private static readonly int DirShadowAtlasId = Shader.PropertyToID("_DirectionalShadowAtlas"),
             DirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices");
 
-        private static Matrix4x4[]
-            dirShadowMatrices = new Matrix4x4[MaxShadowedDirectionalLightCount];
+        private static readonly Matrix4x4[]
+            DirShadowMatrices = new Matrix4x4[MaxShadowedDirectionalLightCount * MaxCascades];
 
 
         readonly ShadowedDirectionalLight[] _shadowedDirectionalLights =
@@ -63,9 +64,8 @@ namespace CustomRP.Runtime {
                     new ShadowedDirectionalLight {
                         VisibleLightIndex = visibleLightIndex
                     };
-                return new Vector2(
-                    light.shadowStrength,
-                    _shadowedDirectionalLightCount++
+                return new Vector2(light.shadowStrength,
+                    _settings.directional.cascadeCount * _shadowedDirectionalLightCount++
                 );
             }
 
@@ -97,14 +97,18 @@ namespace CustomRP.Runtime {
             _buffer.ClearRenderTarget(true, false, Color.clear);
             _buffer.BeginSample(BufferName);
             ExecuteBuffer();
-            int split = _shadowedDirectionalLightCount <= 1 ? 1 : 2;
+
+            int tiles = _shadowedDirectionalLightCount * _settings.directional.cascadeCount;
+            //分割数量应是二的幂数 这样重视可以进行整数除法
+            //否则会遇到不对齐的问题浪费吞吐空间
+            int split = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
             int tileSize = atlasSize / split;
 
             for (int i = 0; i < _shadowedDirectionalLightCount; i++) {
                 RenderDirectionalShadows(i, split, tileSize);
             }
 
-            _buffer.SetGlobalMatrixArray(DirShadowMatricesId, dirShadowMatrices);
+            _buffer.SetGlobalMatrixArray(DirShadowMatricesId, DirShadowMatrices);
 
             _buffer.EndSample(BufferName);
             ExecuteBuffer();
@@ -114,22 +118,27 @@ namespace CustomRP.Runtime {
             ShadowedDirectionalLight light = _shadowedDirectionalLights[index];
             var shadowSettings =
                 new ShadowDrawingSettings(_cullingResults, light.VisibleLightIndex);
-            //这是我见过最长的函数名
-            _cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(
-                light.VisibleLightIndex, 0, 1, Vector3.zero, tileSize,
-                0f, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix,
-                out ShadowSplitData splitData);
-            shadowSettings.splitData = splitData; //包含关于shadow投射对象如何被剔除的信息
-            //    SetTileViewport(index, split, tileSize);
-            dirShadowMatrices[index] = ConvertToAtlasMatrix(
-                projMatrix * viewMatrix,
-                SetTileViewport(index, split, tileSize),
-                split);
-
-
-            _buffer.SetViewProjectionMatrices(viewMatrix, projMatrix);
-            ExecuteBuffer();
-            _context.DrawShadows(ref shadowSettings);
+            int cascadeCount = _settings.directional.cascadeCount;
+            int tileOffset = index * cascadeCount;
+            Vector3 ratios = _settings.directional.CascadeRatios;
+            for (int i = 0; i < cascadeCount; i++) {
+                //这是我见过最长的函数名
+                _cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(
+                    light.VisibleLightIndex, i, cascadeCount, ratios, tileSize,
+                    0f, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix,
+                    out ShadowSplitData splitData);
+                shadowSettings.splitData = splitData; //包含关于shadow投射对象如何被剔除的信息
+                int tileIndex = tileOffset + i;
+                //    SetTileViewport(index, split, tileSize);
+                DirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(
+                    projMatrix * viewMatrix,
+                    SetTileViewport(tileIndex, split, tileSize),
+                    split);
+                
+                _buffer.SetViewProjectionMatrices(viewMatrix, projMatrix);
+                ExecuteBuffer();
+                _context.DrawShadows(ref shadowSettings);
+            }
         }
 
         Vector2 SetTileViewport(int index, int split, float tileSize) {

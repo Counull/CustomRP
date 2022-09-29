@@ -2,7 +2,7 @@
 #define CUSTOM_SHADOWS_INCLUDED
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Shadow/ShadowSamplingTent.hlsl"
 #define MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT 4
-
+#define MAX_CASCADE_COUNT 4
 
 TEXTURE2D_SHADOW(_DirectionalShadowAtlas);
 #define SHADOW_SAMPLER sampler_linear_clamp_compare
@@ -11,7 +11,7 @@ TEXTURE2D_SHADOW(_DirectionalShadowAtlas);
 SAMPLER_CMP(SHADOW_SAMPLER); //常规双线性过滤对深度数据没有意义。
 
 CBUFFER_START(_CustomShadows)
-float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT];
+float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT* MAX_CASCADE_COUNT];
 CBUFFER_END
 
 struct DirectionalShadowData
@@ -43,7 +43,8 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData data, Surface surfac
         float4(surfaceWS.position, 1.0)
     ).xyz;
     const float shadow = SampleDirectionalShadowAtlas(positionSTS);
-    return lerp(1.0, shadow, data.strength);
+    return  shadow;
+    return  lerp(1.0, shadow, data.strength);
 }
 
 
