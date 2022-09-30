@@ -12,21 +12,25 @@ namespace CustomRP.Runtime {
         const int MaxShadowedDirectionalLightCount = 4, MaxCascades = 4;
 
         private static readonly int DirShadowAtlasId = Shader.PropertyToID("_DirectionalShadowAtlas"),
-            DirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices");
+            DirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices"),
+            CascadeCountId = Shader.PropertyToID("_CascadeCount"),
+            CascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres"),
+            ShadowDistanceId = Shader.PropertyToID("_ShadowDistance");
+
 
         private static readonly Matrix4x4[]
             DirShadowMatrices = new Matrix4x4[MaxShadowedDirectionalLightCount * MaxCascades];
 
+        static Vector4[] _cascadeCullingSpheres = new Vector4[MaxCascades];
 
         readonly ShadowedDirectionalLight[] _shadowedDirectionalLights =
             new ShadowedDirectionalLight[MaxShadowedDirectionalLightCount];
 
-
-        private int _shadowedDirectionalLightCount;
-
         readonly CommandBuffer _buffer = new CommandBuffer {
             name = BufferName
         };
+
+        private int _shadowedDirectionalLightCount;
 
         ScriptableRenderContext _context;
 
@@ -108,8 +112,10 @@ namespace CustomRP.Runtime {
                 RenderDirectionalShadows(i, split, tileSize);
             }
 
+            _buffer.SetGlobalInt(CascadeCountId, _settings.directional.cascadeCount);
+            _buffer.SetGlobalVectorArray(CascadeCullingSpheresId, _cascadeCullingSpheres);
             _buffer.SetGlobalMatrixArray(DirShadowMatricesId, DirShadowMatrices);
-
+            _buffer.SetGlobalFloat(ShadowDistanceId, _settings.maxDistance);
             _buffer.EndSample(BufferName);
             ExecuteBuffer();
         }
@@ -128,13 +134,20 @@ namespace CustomRP.Runtime {
                     0f, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix,
                     out ShadowSplitData splitData);
                 shadowSettings.splitData = splitData; //包含关于shadow投射对象如何被剔除的信息
+
+                if (index == 0) {
+                    var cullingSphere = splitData.cullingSphere;
+                    cullingSphere.w *= cullingSphere.w; //预计算cullingSphere的半径 (xyz应该是球体的球心坐标 ，而W为半径）
+                    _cascadeCullingSpheres[i] = cullingSphere; //取出级联切割球体 此时w已经为半径的平方
+                }
+
                 int tileIndex = tileOffset + i;
                 //    SetTileViewport(index, split, tileSize);
                 DirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(
                     projMatrix * viewMatrix,
                     SetTileViewport(tileIndex, split, tileSize),
                     split);
-                
+
                 _buffer.SetViewProjectionMatrices(viewMatrix, projMatrix);
                 ExecuteBuffer();
                 _context.DrawShadows(ref shadowSettings);

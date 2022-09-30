@@ -10,7 +10,6 @@
 #include "../ShaderLibrary/Lighting.hlsl"
 
 
-
 TEXTURE2D(_BaseMap);
 SAMPLER(sampler_BaseMap);
 
@@ -76,6 +75,7 @@ float4 LitPassFragment(Varyings input) : SV_TARGET
     surface.viewDirection = normalize(_WorldSpaceCameraPos - input.positionWS);
     surface.color = base.rgb;
     surface.alpha = base.a;
+    surface.depth = -TransformWorldToView(input.positionWS).z;
     surface.metallic = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
     surface.smoothness = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
     #if defined(_PREMULTIPLY_ALPHA)
