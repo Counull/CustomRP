@@ -15,8 +15,8 @@ namespace CustomRP.Runtime {
             DirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices"),
             CascadeCountId = Shader.PropertyToID("_CascadeCount"),
             CascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres"),
-            ShadowDistanceId = Shader.PropertyToID("_ShadowDistance");
-
+            // ShadowDistanceId = Shader.PropertyToID("_ShadowDistance");
+            ShadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
 
         private static readonly Matrix4x4[]
             DirShadowMatrices = new Matrix4x4[MaxShadowedDirectionalLightCount * MaxCascades];
@@ -56,6 +56,7 @@ namespace CustomRP.Runtime {
 
 
         //找到对视图有影响的光源之后存储
+        //return  x为阴影强度 y为shadowmap中当前光照对应的贴图偏移量
         public Vector2 ReserveDirectionalShadows(
             Light light, int visibleLightIndex
         ) {
@@ -68,6 +69,8 @@ namespace CustomRP.Runtime {
                     new ShadowedDirectionalLight {
                         VisibleLightIndex = visibleLightIndex
                     };
+
+
                 return new Vector2(light.shadowStrength,
                     _settings.directional.cascadeCount * _shadowedDirectionalLightCount++
                 );
@@ -115,7 +118,19 @@ namespace CustomRP.Runtime {
             _buffer.SetGlobalInt(CascadeCountId, _settings.directional.cascadeCount);
             _buffer.SetGlobalVectorArray(CascadeCullingSpheresId, _cascadeCullingSpheres);
             _buffer.SetGlobalMatrixArray(DirShadowMatricesId, DirShadowMatrices);
-            _buffer.SetGlobalFloat(ShadowDistanceId, _settings.maxDistance);
+            //   _buffer.SetGlobalFloat(ShadowDistanceId, _settings.maxDistance);
+
+
+            //此处阴影淡出分为两部分 一个是阴影最远距离的淡入参数存储为xy只影响与最大距离相关的淡入淡出，另一个是最大级联两侧的淡入淡出
+
+
+            float f = 1f - _settings.directional.cascadeFade;
+            _buffer.SetGlobalVector(
+                ShadowDistanceFadeId,
+                // (1 - d / m) / f 插值 在此处把m和f变为倒数可避免在shader里进行除法运算储存为xy
+                // z中是为级联淡出准备的参数f = 1 - square(1 - f) 
+                new Vector4(1f / _settings.maxDistance, 1f / _settings.distanceFade, 1f / (1f - f * f))
+            );
             _buffer.EndSample(BufferName);
             ExecuteBuffer();
         }

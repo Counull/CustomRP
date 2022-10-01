@@ -14,19 +14,20 @@ CBUFFER_START(_CustomShadows)
 int _CascadeCount;
 float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT];
 float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT * MAX_CASCADE_COUNT];
-float _ShadowDistance;
+//float _ShadowDistance;
+float4 _ShadowDistanceFade;
 CBUFFER_END
 
 struct DirectionalShadowData
 {
-    float strength;
-    int tileIndex;
+    float strength; //阴影强度
+    int tileIndex; //由层级和光源index换算出的具体采样shadowmap中的哪个贴图
 };
 
 struct ShadowData
 {
-    int cascadeIndex;
-    float strength;
+    float strength; //阴影强度
+    int cascadeIndex; //层级数
 };
 
 //Shadows贴图的采样结果决定了在只考虑Shadows的情况下，有多少光线到达表面。
@@ -57,13 +58,15 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData data, Surface surfac
 
 float FadedShadowStrength(float distance, float scale, float fade)
 {
+    //(1 - d / m) / f 此时m和f已经在cup上被计算为是倒数 所以使用乘法
     return saturate((1.0 - distance * scale) * fade);
 }
 
 ShadowData GetShadowData(Surface surfaceWS)
 {
     ShadowData data;
-    data.strength = surfaceWS.depth < _ShadowDistance ? 1.0 : 0.0;;
+    // data.strength = surfaceWS.depth < _ShadowDistance ? 1.0 : 0.0;;
+    data.strength = FadedShadowStrength(surfaceWS.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
     int i;
     for (i = 0; i < _CascadeCount; i++)
     {
@@ -71,6 +74,13 @@ ShadowData GetShadowData(Surface surfaceWS)
         float distanceSqr = DistanceSquared(surfaceWS.position, sphere.xyz);
         if (distanceSqr < sphere.w) //在C#代码中 sphere的w代表球心 这里基本上是比较距离确定此像素对应的点是否在球内
         {
+            if (i == _CascadeCount - 1) //判断是否为最终的级联
+            {
+                data.strength *= FadedShadowStrength(
+                    distanceSqr, 1.0 / sphere.w, // sphere.w=r*r
+                    _ShadowDistanceFade.z //此时_ShadowDistanceFade.z = 1 - square(1 - f) 
+                ); //填入后相当于(1 - square(d) / square(r) ) / f
+            }
             break;
         }
     }
