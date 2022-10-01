@@ -6,6 +6,7 @@ namespace CustomRP.Runtime {
     public class Shadows {
         struct ShadowedDirectionalLight {
             public int VisibleLightIndex;
+            public float SlopeScaleBias;
         }
 
         const string BufferName = "Shadows";
@@ -58,17 +59,18 @@ namespace CustomRP.Runtime {
 
 
         /// <summary>
-        /// 判断可以投射阴影且对当前视野内的场景有影响的Light之后存储相关信息
+        /// 判断可以投射阴影且对当前视野内的场景有影响的Light之后存储相关信息在_shadowedDirectionalLights中
         /// </summary>
         /// <param name="light">场景中的Light</param>
         /// <param name="visibleLightIndex">此Light对应的索引</param>
         /// <returns>
         /// x：阴影强度shadowStrength 
         /// y：当前光源被安排在阴影图集内的偏移量
+        /// z：light.shadowNormalBias
         /// </returns>
         //
         //return  x为阴影强度 y为shadowmap中当前光照对应的贴图偏移量
-        public Vector2 ReserveDirectionalShadows(
+        public Vector3 ReserveDirectionalShadows(
             Light light, int visibleLightIndex
         ) {
             if (
@@ -78,12 +80,15 @@ namespace CustomRP.Runtime {
             ) {
                 _shadowedDirectionalLights[_shadowedDirectionalLightCount] =
                     new ShadowedDirectionalLight {
-                        VisibleLightIndex = visibleLightIndex
+                        VisibleLightIndex = visibleLightIndex,
+                        SlopeScaleBias = light.shadowBias
                     };
 
 
-                return new Vector2(light.shadowStrength,
-                    _settings.directional.cascadeCount * _shadowedDirectionalLightCount++
+                //我好烦他这个在参数里++ 真他吗不舒服 狗日的
+                return new Vector3(light.shadowStrength,
+                    _settings.directional.cascadeCount * _shadowedDirectionalLightCount++,
+                    light.shadowNormalBias
                 );
             }
 
@@ -185,10 +190,10 @@ namespace CustomRP.Runtime {
                     split);
 
                 _buffer.SetViewProjectionMatrices(viewMatrix, projMatrix);
-                //  _buffer.SetGlobalDepthBias(00000f, 3f);
+                _buffer.SetGlobalDepthBias(0f, light.SlopeScaleBias);
                 ExecuteBuffer();
                 _context.DrawShadows(ref shadowSettings);
-                //  _buffer.SetGlobalDepthBias(0f, 0f);
+                _buffer.SetGlobalDepthBias(0f, 0f);
             }
         }
 

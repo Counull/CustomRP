@@ -23,6 +23,7 @@ struct DirectionalShadowData
 {
     float strength; //阴影强度
     int tileIndex; //由层级和光源index换算出的具体采样shadowmap中的哪个贴图
+    float normalBias;
 };
 
 struct ShadowData
@@ -48,7 +49,7 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
     {
         return 1.0;
     }
-    const float3 normalBias = surfaceWS.normal * _CascadeData[global.cascadeIndex].y;
+    const float3 normalBias = surfaceWS.normal * (directional.normalBias * _CascadeData[global.cascadeIndex].y);
     const float3 positionSTS = mul(
         _DirectionalShadowMatrices[directional.tileIndex],
         float4(surfaceWS.position + normalBias, 1.0)
