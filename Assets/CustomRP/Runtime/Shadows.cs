@@ -16,12 +16,14 @@ namespace CustomRP.Runtime {
             CascadeCountId = Shader.PropertyToID("_CascadeCount"),
             CascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres"),
             // ShadowDistanceId = Shader.PropertyToID("_ShadowDistance");
+            CascadeDataId = Shader.PropertyToID("_CascadeData"),
             ShadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
 
         private static readonly Matrix4x4[]
             DirShadowMatrices = new Matrix4x4[MaxShadowedDirectionalLightCount * MaxCascades];
 
-        static Vector4[] _cascadeCullingSpheres = new Vector4[MaxCascades];
+        static readonly Vector4[] CascadeCullingSpheres = new Vector4[MaxCascades],
+            CascadeData = new Vector4[MaxCascades];
 
         readonly ShadowedDirectionalLight[] _shadowedDirectionalLights =
             new ShadowedDirectionalLight[MaxShadowedDirectionalLightCount];
@@ -55,7 +57,16 @@ namespace CustomRP.Runtime {
         }
 
 
-        //找到对视图有影响的光源之后存储
+        /// <summary>
+        /// 判断可以投射阴影且对当前视野内的场景有影响的Light之后存储相关信息
+        /// </summary>
+        /// <param name="light">场景中的Light</param>
+        /// <param name="visibleLightIndex">此Light对应的索引</param>
+        /// <returns>
+        /// x：阴影强度shadowStrength 
+        /// y：当前光源被安排在阴影图集内的偏移量
+        /// </returns>
+        //
         //return  x为阴影强度 y为shadowmap中当前光照对应的贴图偏移量
         public Vector2 ReserveDirectionalShadows(
             Light light, int visibleLightIndex
@@ -92,6 +103,10 @@ namespace CustomRP.Runtime {
             }
         }
 
+        /// <summary>
+        /// 在需要渲染阴影时创建ShadowMap集贴图（里面会包含所以有光线产生的ShadowMap）
+        /// ShadowMap集->每一个光源对应的ShadowMap->每一个级联对应的shadowMap
+        /// </summary>
         void RenderDirectionalShadows() {
             int atlasSize = (int) _settings.directional.atlasSize;
             //使用纹理的property ID 作为参数 声明需要commendBuffer创建一张正方形纹理
@@ -116,8 +131,9 @@ namespace CustomRP.Runtime {
             }
 
             _buffer.SetGlobalInt(CascadeCountId, _settings.directional.cascadeCount);
-            _buffer.SetGlobalVectorArray(CascadeCullingSpheresId, _cascadeCullingSpheres);
+            _buffer.SetGlobalVectorArray(CascadeCullingSpheresId, CascadeCullingSpheres);
             _buffer.SetGlobalMatrixArray(DirShadowMatricesId, DirShadowMatrices);
+            _buffer.SetGlobalVectorArray(CascadeDataId, CascadeData);
             //   _buffer.SetGlobalFloat(ShadowDistanceId, _settings.maxDistance);
 
 
@@ -135,6 +151,13 @@ namespace CustomRP.Runtime {
             ExecuteBuffer();
         }
 
+        /// <summary>
+        /// 向GPU传输shadow所需要的数据
+        /// ShadowMap集->每一个光源对应的ShadowMap->每一个级联对应的shadowMap
+        /// </summary>
+        /// <param name="index">投射阴影的光线的索引</param>
+        /// <param name="split">ShadowMap集内有几个shadowMap 每个ShadowMap对应一个光源</param>
+        /// <param name="tileSize">每一张shadowMap的级联的长宽像素（长宽相等）</param>
         void RenderDirectionalShadows(int index, int split, int tileSize) {
             ShadowedDirectionalLight light = _shadowedDirectionalLights[index];
             var shadowSettings =
@@ -151,9 +174,7 @@ namespace CustomRP.Runtime {
                 shadowSettings.splitData = splitData; //包含关于shadow投射对象如何被剔除的信息
 
                 if (index == 0) {
-                    var cullingSphere = splitData.cullingSphere;
-                    cullingSphere.w *= cullingSphere.w; //预计算cullingSphere的半径 (xyz应该是球体的球心坐标 ，而W为半径）
-                    _cascadeCullingSpheres[i] = cullingSphere; //取出级联切割球体 此时w已经为半径的平方
+                    SetCascadeData(i, splitData.cullingSphere, tileSize);
                 }
 
                 int tileIndex = tileOffset + i;
@@ -164,8 +185,10 @@ namespace CustomRP.Runtime {
                     split);
 
                 _buffer.SetViewProjectionMatrices(viewMatrix, projMatrix);
+                //  _buffer.SetGlobalDepthBias(00000f, 3f);
                 ExecuteBuffer();
                 _context.DrawShadows(ref shadowSettings);
+                //  _buffer.SetGlobalDepthBias(0f, 0f);
             }
         }
 
@@ -200,6 +223,24 @@ namespace CustomRP.Runtime {
             m.m22 = 0.5f * (m.m22 + m.m32);
             m.m23 = 0.5f * (m.m23 + m.m33);
             return m;
+        }
+
+        /// <summary>
+        /// 计算阴影级联的相关数据 所有光线只计算一次即可因为需要的数据都一样
+        /// </summary>
+        /// <param name="index">当前等级级联Map的索引</param>
+        /// <param name="cullingSphere">当前等级的级联Map的CullingSphere数据xyz为圆心位置，
+        /// w为半径 经过此函数后w修改为半径的平方</param>
+        /// <param name="tileSize">当前级联等级Map的大小</param>
+        void SetCascadeData(int index, Vector4 cullingSphere, float tileSize) {
+            //    CascadeData[index].x = 1f / cullingSphere.w;
+            float texelSize = 2f * cullingSphere.w / tileSize;
+
+            cullingSphere.w *= cullingSphere.w;
+            CascadeCullingSpheres[index] = cullingSphere;
+            CascadeData[index] = new Vector4(
+                1f / cullingSphere.w,
+                texelSize * 1.4142136f);
         }
 
         public void Cleanup() {

@@ -13,6 +13,7 @@ SAMPLER_CMP(SHADOW_SAMPLER); //常规双线性过滤对深度数据没有意义�
 CBUFFER_START(_CustomShadows)
 int _CascadeCount;
 float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT];
+float4 _CascadeData[MAX_CASCADE_COUNT];
 float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT * MAX_CASCADE_COUNT];
 //float _ShadowDistance;
 float4 _ShadowDistanceFade;
@@ -41,19 +42,20 @@ float SampleDirectionalShadowAtlas(float3 positionSTS)
     );
 }
 
-float GetDirectionalShadowAttenuation(DirectionalShadowData data, Surface surfaceWS)
+float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowData global, Surface surfaceWS)
 {
-    if (data.strength <= 0.0)
+    if (directional.strength <= 0.0)
     {
         return 1.0;
     }
+    const float3 normalBias = surfaceWS.normal * _CascadeData[global.cascadeIndex].y;
     const float3 positionSTS = mul(
-        _DirectionalShadowMatrices[data.tileIndex],
-        float4(surfaceWS.position, 1.0)
+        _DirectionalShadowMatrices[directional.tileIndex],
+        float4(surfaceWS.position + normalBias, 1.0)
     ).xyz;
     const float shadow = SampleDirectionalShadowAtlas(positionSTS);
     // return shadow;
-    return lerp(1.0, shadow, data.strength);
+    return lerp(1.0, shadow, directional.strength);
 }
 
 float FadedShadowStrength(float distance, float scale, float fade)
@@ -76,8 +78,8 @@ ShadowData GetShadowData(Surface surfaceWS)
         {
             if (i == _CascadeCount - 1) //判断是否为最终的级联
             {
-                data.strength *= FadedShadowStrength(
-                    distanceSqr, 1.0 / sphere.w, // sphere.w=r*r
+                data.strength *= FadedShadowStrength( //Culling Sphere
+                    distanceSqr, _CascadeData[i].x, // _CascadeData[i].x= 1/(r*r)
                     _ShadowDistanceFade.z //此时_ShadowDistanceFade.z = 1 - square(1 - f) 
                 ); //填入后相当于(1 - square(d) / square(r) ) / f
             }
