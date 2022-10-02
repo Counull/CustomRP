@@ -66,7 +66,7 @@ float4 LitPassFragment(Varyings input) : SV_TARGET
     const float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor);
     float4 base = baseMap * baseColor;
     #if defined(_CLIPPING)
-    clip(base.a - UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff));
+        clip(base.a - UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff));
     #endif
 
     Surface surface;
@@ -79,9 +79,9 @@ float4 LitPassFragment(Varyings input) : SV_TARGET
     surface.metallic = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
     surface.smoothness = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
     #if defined(_PREMULTIPLY_ALPHA)
-    BRDF brdf = GetBRDF(surface, true);
+        BRDF brdf = GetBRDF(surface, true);
     #else
-    BRDF brdf = GetBRDF(surface);
+        BRDF brdf = GetBRDF(surface);
     #endif
     float3 color = GetLighting(surface, brdf);
 

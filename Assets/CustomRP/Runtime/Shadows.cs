@@ -7,6 +7,7 @@ namespace CustomRP.Runtime {
         struct ShadowedDirectionalLight {
             public int VisibleLightIndex;
             public float SlopeScaleBias;
+            public float NearPlaneOffset;
         }
 
         const string BufferName = "Shadows";
@@ -81,7 +82,8 @@ namespace CustomRP.Runtime {
                 _shadowedDirectionalLights[_shadowedDirectionalLightCount] =
                     new ShadowedDirectionalLight {
                         VisibleLightIndex = visibleLightIndex,
-                        SlopeScaleBias = light.shadowBias
+                        SlopeScaleBias = light.shadowBias,
+                        NearPlaneOffset = light.shadowNearPlane,
                     };
 
 
@@ -174,7 +176,7 @@ namespace CustomRP.Runtime {
                 //这是我见过最长的函数名
                 _cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(
                     light.VisibleLightIndex, i, cascadeCount, ratios, tileSize,
-                    0f, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix,
+                    light.NearPlaneOffset, out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix,
                     out ShadowSplitData splitData);
                 shadowSettings.splitData = splitData; //包含关于shadow投射对象如何被剔除的信息
 
