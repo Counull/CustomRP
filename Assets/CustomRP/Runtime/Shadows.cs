@@ -164,7 +164,7 @@ namespace CustomRP.Runtime {
             );
             _buffer.EndSample(BufferName);
             SetKeywords();
-            _buffer.SetGlobalVector(ShadowAtlasSizeId,new Vector4(atlasSize,1f/atlasSize));//x纹理大小 //y纹素大小
+            _buffer.SetGlobalVector(ShadowAtlasSizeId, new Vector4(atlasSize, 1f / atlasSize)); //x纹理大小 //y纹素大小
             ExecuteBuffer();
         }
 
@@ -253,12 +253,13 @@ namespace CustomRP.Runtime {
         void SetCascadeData(int index, Vector4 cullingSphere, float tileSize) {
             //    CascadeData[index].x = 1f / cullingSphere.w;
             float texelSize = 2f * cullingSphere.w / tileSize;
-
+            float filterSize = texelSize * ((float) _settings.directional.filter + 1f);
+            cullingSphere.w -= filterSize;
             cullingSphere.w *= cullingSphere.w;
             CascadeCullingSpheres[index] = cullingSphere;
             CascadeData[index] = new Vector4(
                 1f / cullingSphere.w,
-                texelSize * 1.4142136f);
+                filterSize * 1.4142136f);
         }
 
 
