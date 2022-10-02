@@ -29,7 +29,7 @@ SAMPLER_CMP(SHADOW_SAMPLER); //常规双线性过滤对深度数据没有意义�
 CBUFFER_START(_CustomShadows)
 int _CascadeCount;
 float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT];
-float4 _CascadeData[MAX_CASCADE_COUNT];
+float4 _CascadeData[MAX_CASCADE_COUNT]; // _CascadeData[i].x= 1/(r*r) y = 纹素长度
 float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT * MAX_CASCADE_COUNT];
 //float _ShadowDistance;
 float4 _ShadowAtlasSize;
@@ -45,8 +45,9 @@ struct DirectionalShadowData
 
 struct ShadowData
 {
-    float strength; //阴影强度
     int cascadeIndex; //层级数
+    float cascadeBlend; //级联混合
+    float strength; //阴影强度
 };
 
 //Shadows贴图的采样结果决定了在只考虑Shadows的情况下，有多少光线到达表面。
@@ -88,13 +89,28 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
     {
         return 1.0;
     }
-    const float3 normalBias = surfaceWS.normal * (directional.normalBias * _CascadeData[global.cascadeIndex].y);
-    const float3 positionSTS = mul(
+    float3 normalBias = surfaceWS.normal * (directional.normalBias * _CascadeData[global.cascadeIndex].y);
+    float3 positionSTS = mul(
         _DirectionalShadowMatrices[directional.tileIndex],
         float4(surfaceWS.position + normalBias, 1.0)
     ).xyz;
-    const float shadow = FilterDirectionalShadow(positionSTS);
+    float shadow = FilterDirectionalShadow(positionSTS);
     // return shadow;
+    if (global.cascadeBlend < 1.0)
+    {
+        //在中间区域需要采集两个相邻的级联并插值得到最终值使变化不过于突兀
+        normalBias = surfaceWS.normal *
+            (directional.normalBias * _CascadeData[global.cascadeIndex + 1].y);
+        positionSTS = mul(
+            _DirectionalShadowMatrices[directional.tileIndex + 1],
+            float4(surfaceWS.position + normalBias, 1.0)
+        ).xyz;
+        shadow = lerp(
+            FilterDirectionalShadow(positionSTS), shadow, global.cascadeBlend);
+
+    }
+
+
     return lerp(1.0, shadow, directional.strength);
 }
 
@@ -108,20 +124,27 @@ ShadowData GetShadowData(Surface surfaceWS)
 {
     ShadowData data;
     // data.strength = surfaceWS.depth < _ShadowDistance ? 1.0 : 0.0;;
+    data.cascadeBlend = 1.0;
     data.strength = FadedShadowStrength(surfaceWS.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
     int i;
     for (i = 0; i < _CascadeCount; i++)
     {
         float4 sphere = _CascadeCullingSpheres[i];
         float distanceSqr = DistanceSquared(surfaceWS.position, sphere.xyz);
-        if (distanceSqr < sphere.w) //在C#代码中 sphere的w代表球心 这里基本上是比较距离确定此像素对应的点是否在球内
+        if (distanceSqr < sphere.w) //在C#代码中 sphere的w代表半径 这里基本上是比较距离确定此像素对应的点是否在球内
         {
+            float fade = FadedShadowStrength( //Culling Sphere
+                distanceSqr, _CascadeData[i].x, // _CascadeData[i].x= 1/(r*r)
+                _ShadowDistanceFade.z //此时_ShadowDistanceFade.z = 1 - square(1 - f) 
+            ); //填入后相当于(1 - square(d) / square(r) ) / f
+
             if (i == _CascadeCount - 1) //判断是否为最终的级联
             {
-                data.strength *= FadedShadowStrength( //Culling Sphere
-                    distanceSqr, _CascadeData[i].x, // _CascadeData[i].x= 1/(r*r)
-                    _ShadowDistanceFade.z //此时_ShadowDistanceFade.z = 1 - square(1 - f) 
-                ); //填入后相当于(1 - square(d) / square(r) ) / f
+                data.strength *= fade;
+            }
+            else
+            {
+                data.cascadeBlend = fade;
             }
             break;
         }

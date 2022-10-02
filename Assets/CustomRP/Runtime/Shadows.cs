@@ -244,7 +244,7 @@ namespace CustomRP.Runtime {
 
         /// <summary>
         /// 计算阴影级联的相关数据 所有光线只计算一次即可因为需要的数据都一样
-        /// 填充CascadeData x为r平方的倒数，y为对应级联对应的shadowMap的纹素的对角线距离
+        /// 填充CascadeData x为r平方的倒数，y为对应级联对应的shadowMap的纹素的距离
         /// </summary>
         /// <param name="index">当前等级级联Map的索引</param>
         /// <param name="cullingSphere">当前等级的级联Map的CullingSphere数据xyz为圆心位置，
