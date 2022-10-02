@@ -21,6 +21,13 @@ namespace CustomRP.Runtime {
             CascadeDataId = Shader.PropertyToID("_CascadeData"),
             ShadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
 
+        private static readonly string[] DirectionalFilterKeywords = {
+            "_DIRECTIONAL_PCF3",
+            "_DIRECTIONAL_PCF5",
+            "_DIRECTIONAL_PCF7",
+        };
+
+
         private static readonly Matrix4x4[]
             DirShadowMatrices = new Matrix4x4[MaxShadowedDirectionalLightCount * MaxCascades];
 
