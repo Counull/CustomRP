@@ -27,7 +27,7 @@ namespace CustomRP.Runtime {
         [System.Serializable]
         public struct Directional {
             public TextureSize atlasSize;
-            public FilterMode filter;
+            public FilterMode filter; //PCF(软阴影采样数）
             [Range(1, 4)] public int cascadeCount;
             [Range(0f, 1f)] public float cascadeRatio1, cascadeRatio2, cascadeRatio3;
             [Range(0.001f, 1f)] public float cascadeFade;

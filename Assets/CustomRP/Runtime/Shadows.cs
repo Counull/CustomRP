@@ -19,6 +19,7 @@ namespace CustomRP.Runtime {
             CascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres"),
             // ShadowDistanceId = Shader.PropertyToID("_ShadowDistance");
             CascadeDataId = Shader.PropertyToID("_CascadeData"),
+            ShadowAtlasSizeId = Shader.PropertyToID("_ShadowAtlasSize"),
             ShadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
 
         private static readonly string[] DirectionalFilterKeywords = {
@@ -162,6 +163,8 @@ namespace CustomRP.Runtime {
                 new Vector4(1f / _settings.maxDistance, 1f / _settings.distanceFade, 1f / (1f - f * f))
             );
             _buffer.EndSample(BufferName);
+            SetKeywords();
+            _buffer.SetGlobalVector(ShadowAtlasSizeId,new Vector4(atlasSize,1f/atlasSize));//x纹理大小 //y纹素大小
             ExecuteBuffer();
         }
 
@@ -241,6 +244,7 @@ namespace CustomRP.Runtime {
 
         /// <summary>
         /// 计算阴影级联的相关数据 所有光线只计算一次即可因为需要的数据都一样
+        /// 填充CascadeData x为r平方的倒数，y为对应级联对应的shadowMap的纹素的对角线距离
         /// </summary>
         /// <param name="index">当前等级级联Map的索引</param>
         /// <param name="cullingSphere">当前等级的级联Map的CullingSphere数据xyz为圆心位置，
@@ -255,6 +259,19 @@ namespace CustomRP.Runtime {
             CascadeData[index] = new Vector4(
                 1f / cullingSphere.w,
                 texelSize * 1.4142136f);
+        }
+
+
+        void SetKeywords() {
+            int enabledIndex = (int) _settings.directional.filter - 1;
+            for (int i = 0; i < DirectionalFilterKeywords.Length; i++) {
+                if (i == enabledIndex) {
+                    _buffer.EnableShaderKeyword(DirectionalFilterKeywords[i]);
+                }
+                else {
+                    _buffer.DisableShaderKeyword(DirectionalFilterKeywords[i]);
+                }
+            }
         }
 
         public void Cleanup() {
