@@ -6,11 +6,11 @@ namespace CustomRP.Runtime {
         private readonly CameraRenderer _renderer = new();
         readonly bool _useDynamicBatching;
         readonly bool _useGPUInstancing;
-        private ShadowSettings shadowSettings;
+        private readonly ShadowSettings _shadowSettings;
 
         public CustomRenderPipeline(bool useDynamicBatching, bool useGPUInstancing, bool useSrpBatcher,
             ShadowSettings shadowSettings) {
-            this.shadowSettings = shadowSettings;
+            this._shadowSettings = shadowSettings;
             this._useDynamicBatching = useDynamicBatching;
             this._useGPUInstancing = useGPUInstancing;
             GraphicsSettings.useScriptableRenderPipelineBatching = useSrpBatcher;
@@ -19,7 +19,7 @@ namespace CustomRP.Runtime {
 
         protected override void Render(ScriptableRenderContext context, Camera[] cameras) {
             foreach (Camera camera in cameras) {
-                _renderer.Render(context, camera, _useDynamicBatching, _useGPUInstancing,shadowSettings);
+                _renderer.Render(context, camera, _useDynamicBatching, _useGPUInstancing, _shadowSettings);
             }
         }
     }
