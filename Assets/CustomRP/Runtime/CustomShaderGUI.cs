@@ -10,7 +10,7 @@ public class CustomShaderGUI : ShaderGUI {
         Dither,
         Off
     }
-    
+
 
     MaterialEditor _editor;
     Object[] _materials;
@@ -58,17 +58,23 @@ public class CustomShaderGUI : ShaderGUI {
     }
 
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties) {
+        EditorGUI.BeginChangeCheck();
         base.OnGUI(materialEditor, properties);
+
         _editor = materialEditor;
         _materials = materialEditor.targets;
         this._properties = properties;
         EditorGUILayout.Space();
         _showPresets = EditorGUILayout.Foldout(_showPresets, "Presets", true);
         if (_showPresets) {
-            OpaquePreset(); 
+            OpaquePreset();
             ClipPreset();
             FadePreset();
             TransparentPreset();
+        }
+
+        if (EditorGUI.EndChangeCheck()) {
+            SetShadowCasterPass();
         }
     }
 
@@ -146,6 +152,20 @@ public class CustomShaderGUI : ShaderGUI {
             }
         }
     }
+
+    void SetShadowCasterPass() {
+        MaterialProperty shadows = FindProperty("_Shadows", _properties, false);
+        if (shadows == null || shadows.hasMixedValue) {
+            return;
+        }
+
+        bool enabled = shadows.floatValue < (float) ShadowMode.Off;
+
+        foreach (Material m in _materials) {
+            m.SetShaderPassEnabled("ShadowCaster", enabled);
+        }
+    }
+
 
     bool HasProperty(string name) =>
         FindProperty(name, _properties, false) != null;
