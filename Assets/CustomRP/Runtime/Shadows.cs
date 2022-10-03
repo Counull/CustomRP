@@ -28,6 +28,10 @@ namespace CustomRP.Runtime {
             "_DIRECTIONAL_PCF7",
         };
 
+        static readonly string[] CascadeBlendKeywords = {
+            "_CASCADE_BLEND_SOFT",
+            "_CASCADE_BLEND_DITHER"
+        };
 
         private static readonly Matrix4x4[]
             DirShadowMatrices = new Matrix4x4[MaxShadowedDirectionalLightCount * MaxCascades];
@@ -162,9 +166,11 @@ namespace CustomRP.Runtime {
                 // z中是为级联淡出准备的参数f = 1 - square(1 - f) 
                 new Vector4(1f / _settings.maxDistance, 1f / _settings.distanceFade, 1f / (1f - f * f))
             );
-            _buffer.EndSample(BufferName);
-            SetKeywords();
+
+            SetKeywords(DirectionalFilterKeywords, (int) _settings.directional.filter - 1);
+            SetKeywords(CascadeBlendKeywords, (int) _settings.directional.cascadeBlend - 1);
             _buffer.SetGlobalVector(ShadowAtlasSizeId, new Vector4(atlasSize, 1f / atlasSize)); //x纹理大小 //y纹素大小
+            _buffer.EndSample(BufferName);
             ExecuteBuffer();
         }
 
@@ -263,14 +269,14 @@ namespace CustomRP.Runtime {
         }
 
 
-        void SetKeywords() {
-            int enabledIndex = (int) _settings.directional.filter - 1;
-            for (int i = 0; i < DirectionalFilterKeywords.Length; i++) {
+        void SetKeywords(string[] keywords, int enabledIndex) {
+            // int enabledIndex = (int) _settings.directional.filter - 1;
+            for (int i = 0; i < keywords.Length; i++) {
                 if (i == enabledIndex) {
-                    _buffer.EnableShaderKeyword(DirectionalFilterKeywords[i]);
+                    _buffer.EnableShaderKeyword(keywords[i]);
                 }
                 else {
-                    _buffer.DisableShaderKeyword(DirectionalFilterKeywords[i]);
+                    _buffer.DisableShaderKeyword(keywords[i]);
                 }
             }
         }

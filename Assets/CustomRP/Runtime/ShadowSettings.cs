@@ -19,6 +19,12 @@ namespace CustomRP.Runtime {
             PCF7x7
         }
 
+        public enum CascadeBlendMode {
+            Hard,
+            Soft,
+            Dither
+        }
+
 
         [Min(0.001f)] public float maxDistance = 100f;
         [Range(0.001f, 1f)] public float distanceFade = 0.1f;
@@ -31,7 +37,7 @@ namespace CustomRP.Runtime {
             [Range(1, 4)] public int cascadeCount;
             [Range(0f, 1f)] public float cascadeRatio1, cascadeRatio2, cascadeRatio3;
             [Range(0.001f, 1f)] public float cascadeFade;
-
+            public CascadeBlendMode cascadeBlend;
             public Vector3 CascadeRatios =>
                 new Vector3(cascadeRatio1, cascadeRatio2, cascadeRatio3);
         }
@@ -43,7 +49,8 @@ namespace CustomRP.Runtime {
             cascadeRatio1 = 0.1f,
             cascadeRatio2 = 0.25f,
             cascadeRatio3 = 0.5f,
-            cascadeFade = 0.1f
+            cascadeFade = 0.1f,
+            cascadeBlend = CascadeBlendMode.Hard
         };
     }
 }
