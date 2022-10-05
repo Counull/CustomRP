@@ -32,7 +32,7 @@ namespace CustomRP.Runtime {
             ExecuteBuffer();
             _lighting.Setup(context, _cullingResults, shadowSettings);
             _buffer.EndSample(SampleName);
-            
+
             Setup();
             DrawVisibleGeometry(useDynamicBatching, useGPUInstancing);
             DrawUnsupportedShaders();
@@ -46,7 +46,8 @@ namespace CustomRP.Runtime {
             var sortingSettings = new SortingSettings(_camera) {criteria = SortingCriteria.CommonOpaque};
             var drawingSettings = new DrawingSettings(UnlitShaderTagId, sortingSettings) {
                 enableDynamicBatching = useDynamicBatching,
-                enableInstancing = useGPUInstancing
+                enableInstancing = useGPUInstancing,
+                perObjectData = PerObjectData.Lightmaps
             };
             drawingSettings.SetShaderPassName(1, LitShaderTagId);
             var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);

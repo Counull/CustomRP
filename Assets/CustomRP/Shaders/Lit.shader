@@ -43,6 +43,8 @@ Shader "Custom RP/Lit"
             #pragma multi_compile _ _CASCADE_BLEND_SOFT _CASCADE_BLEND_DITHER
             #pragma shader_feature _CLIPPING
 
+            //Unity  multi_compile
+            #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile_instancing
             #pragma vertex LitPassVertex
             #pragma fragment  LitPassFragment
