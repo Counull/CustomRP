@@ -46,7 +46,7 @@ float3 SampleLightMap(float2 lightMapUV)
 }
 
 
-float SampleLightProb(Surface surfaceWS)
+float3 SampleLightProb(Surface surfaceWS)
 {
     #if defined(LIGHTMAP_ON)
     return 0.0;
@@ -80,6 +80,7 @@ float SampleLightProb(Surface surfaceWS)
 GI GetGI(float2 lightMapUV, Surface surfaceWS)
 {
     GI gi;
+
     gi.diffuse = SampleLightMap(lightMapUV) + SampleLightProb(surfaceWS);
     return gi;
 }
