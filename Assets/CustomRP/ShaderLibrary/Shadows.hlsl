@@ -98,6 +98,7 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
         float4(surfaceWS.position + normalBias, 1.0)
     ).xyz;
     float shadow = FilterDirectionalShadow(positionSTS);
+    
     // return shadow;
     if (global.cascadeBlend < 1.0)
     {
