@@ -13,7 +13,7 @@ struct BRDF
 //为非金属保留0.4的反射率
 float OneMinusReflectivity(float metallic)
 {
-    float range = 1.0 - MIN_REFLECTIVITY;
+    const float range = 1.0 - MIN_REFLECTIVITY;
     return range - metallic * range;
 }
 

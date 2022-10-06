@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 0}
+  m_LightingDataAsset: {fileID: 112000000, guid: 1ae8f92a6d9ff4f47b9bf82f46e2d354, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 01fde1ca4f4c37c41beb9f219038ede5, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -2300,7 +2300,7 @@ MonoBehaviour:
   alphaCutoff: 0.5
   metallic: 0
   smoothness: 0.5
-  emissionColor: {r: 23.968628, g: 0, b: 0, a: 1}
+  emissionColor: {r: 2.9960785, g: 0, b: 0, a: 1}
 --- !u!65 &480932857
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2982,7 +2982,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 611878008}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 6.392, y: 0.5, z: -2.89}
+  m_LocalPosition: {x: 6.245, y: 0.5, z: -2.89}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3001,9 +3001,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7559980805857c4b910d3ccdc310c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseColor: {r: 0.4811321, g: 0.4811321, b: 0.4811321, a: 1}
+  baseColor: {r: 1, g: 1, b: 1, a: 1}
   alphaCutoff: 0.21
-  metallic: 0.75
+  metallic: 0
   smoothness: 0.67
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!135 &611878011
@@ -3430,7 +3430,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!108 &705507994
 Light:
   m_ObjectHideFlags: 0
@@ -7129,7 +7129,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1492045085}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.81, y: 0.5, z: -4.97}
+  m_LocalPosition: {x: -2.009, y: 0.5, z: -5.249}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7788,7 +7788,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.14901961, g: 0.7647059, b: 0.15294118, a: 1}
-  alphaCutoff: 0.5
+  alphaCutoff: 0
   metallic: 0
   smoothness: 0.5
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
@@ -9938,7 +9938,6 @@ GameObject:
   - component: {fileID: 2120848153}
   - component: {fileID: 2120848152}
   - component: {fileID: 2120848151}
-  - component: {fileID: 2120848150}
   m_Layer: 0
   m_Name: Ceiling
   m_TagString: Untagged
@@ -9961,23 +9960,6 @@ Transform:
   m_Father: {fileID: 1070353481}
   m_RootOrder: 78
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2120848150
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2120848148}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f7559980805857c4b910d3ccdc310c9b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  baseColor: {r: 1, g: 1, b: 1, a: 1}
-  alphaCutoff: 0.5
-  metallic: 0
-  smoothness: 0.5
-  emissionColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!65 &2120848151
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -10011,7 +9993,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 87068196a5e1e0545b5561e21ddbd984, type: 2}
+  - {fileID: 2100000, guid: ea408df6e3995144da5917dddf06124a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
