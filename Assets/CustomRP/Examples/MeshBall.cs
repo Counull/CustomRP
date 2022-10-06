@@ -1,8 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class MeshBall : MonoBehaviour {
+    [SerializeField] private bool defaultDraw = true;
+
     static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"),
         MetallicId = Shader.PropertyToID("_Metallic"),
         SmoothnessId = Shader.PropertyToID("_Smoothness");
@@ -10,7 +13,7 @@ public class MeshBall : MonoBehaviour {
     [SerializeField] Mesh mesh = default;
 
     [SerializeField] Material material = default;
-
+    [SerializeField] LightProbeProxyVolume lightProbeVolume = null;
 
     readonly Matrix4x4[] _matrices = new Matrix4x4[1023];
     readonly Vector4[] _baseColors = new Vector4[1023];
@@ -39,10 +42,42 @@ public class MeshBall : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        _block ??= new MaterialPropertyBlock();
-        _block.SetVectorArray(BaseColorId, _baseColors);
-        _block.SetFloatArray(MetallicId, _metallic);
-        _block.SetFloatArray(SmoothnessId, _smoothness);
-        Graphics.DrawMeshInstanced(mesh, 0, material, _matrices, 1023, _block);
+        if (_block == null) {
+            _block ??= new MaterialPropertyBlock();
+            _block.SetVectorArray(BaseColorId, _baseColors);
+            _block.SetFloatArray(MetallicId, _metallic);
+            _block.SetFloatArray(SmoothnessId, _smoothness);
+
+            var positions = new Vector3[1023];
+
+            for (int i = 0; i < _matrices.Length; i++) {
+                positions[i] = _matrices[i].GetColumn(3); //获取球体的位置
+            }
+
+            var lightProbes = new SphericalHarmonicsL2[1023];
+            LightProbes.CalculateInterpolatedLightAndOcclusionProbes(
+                positions, lightProbes, null
+            );
+            _block.CopySHCoefficientArraysFrom(lightProbes);
+        }
+
+        if (defaultDraw) {
+            Graphics.DrawMeshInstanced(mesh, 0, material, _matrices, 1023, _block);
+           // Debug.Log("Mesh Ball Default Draw");
+        }
+        else {
+            bool lightProbeVolumeEnable = lightProbeVolume && lightProbeVolume.enabled;
+            Graphics.DrawMeshInstanced(mesh, 0, material, _matrices, 1023, _block
+                , ShadowCastingMode.On, true, 0, null,
+                lightProbeVolumeEnable ? LightProbeUsage.UseProxyVolume : LightProbeUsage.CustomProvided,
+                lightProbeVolume
+            );
+            /*if (lightProbeVolumeEnable) {
+                Debug.Log("Mesh Ball  LPPV");
+            }
+            else {
+                Debug.Log("Mesh BallLight Probes");
+            }*/
+        }
     }
 }
