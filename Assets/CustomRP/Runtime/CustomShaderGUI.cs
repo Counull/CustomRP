@@ -57,6 +57,7 @@ public class CustomShaderGUI : ShaderGUI {
         }
     }
 
+
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties) {
         EditorGUI.BeginChangeCheck();
         base.OnGUI(materialEditor, properties);
@@ -64,6 +65,9 @@ public class CustomShaderGUI : ShaderGUI {
         _editor = materialEditor;
         _materials = materialEditor.targets;
         this._properties = properties;
+    
+        BakedEmission();
+
         EditorGUILayout.Space();
         _showPresets = EditorGUILayout.Foldout(_showPresets, "Presets", true);
         if (_showPresets) {
@@ -78,6 +82,19 @@ public class CustomShaderGUI : ShaderGUI {
         }
     }
 
+    /// <summary>
+    /// 设置是否烘焙自发光
+    /// </summary>
+    void BakedEmission() {
+        EditorGUI.BeginChangeCheck();
+        _editor.LightmapEmissionProperty();
+        if (EditorGUI.EndChangeCheck()) {
+            foreach (Material m in _editor.targets) {
+                m.globalIlluminationFlags &=
+                    ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            }
+        }
+    }
 
     void OpaquePreset() {
         if (PresetButton("Opaque")) {
