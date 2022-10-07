@@ -97,8 +97,8 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: 1ae8f92a6d9ff4f47b9bf82f46e2d354, type: 2}
-  m_LightingSettings: {fileID: 4890085278179872738, guid: 01fde1ca4f4c37c41beb9f219038ede5, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 30e231097e3774a41af5b11378b7a885, type: 2}
+  m_LightingSettings: {fileID: 4890085278179872738, guid: 2f026f0440a7335419775d9bc8b25b91, type: 2}
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -3492,7 +3492,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.024e-42, y: 6e-44, z: 0, w: 0}
+  m_BoundingSphereOverride: {x: 1.02e-43, y: 0, z: 0, w: 42317.344}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -9942,6 +9942,7 @@ GameObject:
   - component: {fileID: 2120848153}
   - component: {fileID: 2120848152}
   - component: {fileID: 2120848151}
+  - component: {fileID: 2120848154}
   m_Layer: 0
   m_Name: Ceiling
   m_TagString: Untagged
@@ -9997,7 +9998,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ea408df6e3995144da5917dddf06124a, type: 2}
+  - {fileID: 2100000, guid: 87068196a5e1e0545b5561e21ddbd984, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -10027,3 +10028,20 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2120848148}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &2120848154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2120848148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7559980805857c4b910d3ccdc310c9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  baseColor: {r: 1, g: 1, b: 1, a: 1}
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}

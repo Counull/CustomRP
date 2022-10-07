@@ -36,6 +36,13 @@ float4 _ShadowAtlasSize;
 float4 _ShadowDistanceFade;
 CBUFFER_END
 
+
+struct ShadowMask
+{
+    bool distance;
+    float4 shadows;
+};
+
 struct DirectionalShadowData
 {
     float strength; //阴影强度
@@ -48,6 +55,7 @@ struct ShadowData
     int cascadeIndex; //层级数
     float cascadeBlend; //级联混合
     float strength; //阴影强度
+    ShadowMask shadowMask;
 };
 
 //Shadows贴图的采样结果决定了在只考虑Shadows的情况下，有多少光线到达表面。
@@ -98,7 +106,7 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
         float4(surfaceWS.position + normalBias, 1.0)
     ).xyz;
     float shadow = FilterDirectionalShadow(positionSTS);
-    
+
     // return shadow;
     if (global.cascadeBlend < 1.0)
     {
@@ -124,7 +132,8 @@ float FadedShadowStrength(float distance, float scale, float fade)
 ShadowData GetShadowData(Surface surfaceWS)
 {
     ShadowData data;
-    // data.strength = surfaceWS.depth < _ShadowDistance ? 1.0 : 0.0;;
+    data.shadowMask.distance = false;
+    data.shadowMask.shadows = 1.0;
 
     data.cascadeBlend = 1.0;
 
@@ -152,7 +161,7 @@ ShadowData GetShadowData(Surface surfaceWS)
             break;
         }
     }
-    if (i == _CascadeCount)
+    if (i == _CascadeCount) //如果超出了最终的级联则不应该有阴影
     {
         data.strength = 0.0;
     }

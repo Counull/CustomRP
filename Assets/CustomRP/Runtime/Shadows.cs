@@ -13,6 +13,9 @@ namespace CustomRP.Runtime {
         const string BufferName = "Shadows";
         const int MaxShadowedDirectionalLightCount = 4, MaxCascades = 4;
 
+        private int _shadowedDirectionalLightCount;
+        private bool _useShadowMask;
+
         private static readonly int DirShadowAtlasId = Shader.PropertyToID("_DirectionalShadowAtlas"),
             DirShadowMatricesId = Shader.PropertyToID("_DirectionalShadowMatrices"),
             CascadeCountId = Shader.PropertyToID("_CascadeCount"),
@@ -33,6 +36,10 @@ namespace CustomRP.Runtime {
             "_CASCADE_BLEND_DITHER"
         };
 
+        static readonly string[] ShadowMaskKeywords = {
+            "_SHADOW_MASK_DISTANCE"
+        };
+
         private static readonly Matrix4x4[]
             DirShadowMatrices = new Matrix4x4[MaxShadowedDirectionalLightCount * MaxCascades];
 
@@ -46,7 +53,6 @@ namespace CustomRP.Runtime {
             name = BufferName
         };
 
-        private int _shadowedDirectionalLightCount;
 
         ScriptableRenderContext _context;
 
@@ -57,22 +63,37 @@ namespace CustomRP.Runtime {
 
         public void Setup(
             ScriptableRenderContext context, CullingResults cullingResults,
-            ShadowSettings settings
-        ) {
+            ShadowSettings settings) {
             this._context = context;
             this._cullingResults = cullingResults;
             this._settings = settings;
             _shadowedDirectionalLightCount = 0;
+            _useShadowMask = false;
         }
 
-        void ExecuteBuffer() {
-            _context.ExecuteCommandBuffer(_buffer);
-            _buffer.Clear();
+
+        public void Render() {
+            if (_shadowedDirectionalLightCount > 0) {
+                RenderDirectionalShadows();
+            }
+            else {
+                //在没有shadow需要渲染时生成1x1的纹理占位（不然会出问题
+                _buffer.GetTemporaryRT(
+                    DirShadowAtlasId, 1, 1,
+                    32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap
+                );
+            }
+
+            _buffer.BeginSample(BufferName);
+            SetKeywords(ShadowMaskKeywords, _useShadowMask ? 0 : -1);
+            _buffer.EndSample(BufferName);
+            ExecuteBuffer();
         }
 
 
         /// <summary>
         /// 判断可以投射阴影且对当前视野内的场景有影响的Light之后存储相关信息在_shadowedDirectionalLights中
+        /// 新增判断是否需要阴影遮罩
         /// </summary>
         /// <param name="light">场景中的Light</param>
         /// <param name="visibleLightIndex">此Light对应的索引</param>
@@ -80,9 +101,7 @@ namespace CustomRP.Runtime {
         /// x：阴影强度shadowStrength 
         /// y：当前光源被安排在阴影图集内的偏移量
         /// z：light.shadowNormalBias
-        /// </returns>
-        //
-        //return  x为阴影强度 y为shadowmap中当前光照对应的贴图偏移量
+        /// </returns>x为阴影强度 y为shadowmap中当前光照对应的贴图偏移量
         public Vector3 ReserveDirectionalShadows(
             Light light, int visibleLightIndex
         ) {
@@ -98,6 +117,13 @@ namespace CustomRP.Runtime {
                         NearPlaneOffset = light.shadowNearPlane,
                     };
 
+                LightBakingOutput lightBaking = light.bakingOutput;
+                if (
+                    lightBaking.lightmapBakeType == LightmapBakeType.Mixed &&
+                    lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask
+                ) {
+                    _useShadowMask = true;
+                }
 
                 //我好烦他这个在参数里++ 真他吗不舒服 狗日的
                 return new Vector3(light.shadowStrength,
@@ -109,18 +135,6 @@ namespace CustomRP.Runtime {
             return Vector3.zero;
         }
 
-        public void Render() {
-            if (_shadowedDirectionalLightCount > 0) {
-                RenderDirectionalShadows();
-            }
-            else {
-                //在没有shadow需要渲染时生成1x1的纹理占位（不然会出问题
-                _buffer.GetTemporaryRT(
-                    DirShadowAtlasId, 1, 1,
-                    32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap
-                );
-            }
-        }
 
         /// <summary>
         /// 在需要渲染阴影时创建ShadowMap集贴图（里面会包含所以有光线产生的ShadowMap）
@@ -280,6 +294,13 @@ namespace CustomRP.Runtime {
                 }
             }
         }
+
+
+        void ExecuteBuffer() {
+            _context.ExecuteCommandBuffer(_buffer);
+            _buffer.Clear();
+        }
+
 
         public void Cleanup() {
             _buffer.ReleaseTemporaryRT(DirShadowAtlasId);
