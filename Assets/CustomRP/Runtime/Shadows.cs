@@ -107,8 +107,8 @@ namespace CustomRP.Runtime {
         ) {
             if (
                 _shadowedDirectionalLightCount < MaxShadowedDirectionalLightCount &&
-                light.shadows != LightShadows.None && light.shadowStrength > 0f &&
-                _cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b)
+                light.shadows != LightShadows.None && light.shadowStrength > 0f
+                //  _cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b)
             ) {
                 _shadowedDirectionalLights[_shadowedDirectionalLightCount] =
                     new ShadowedDirectionalLight {
@@ -123,6 +123,12 @@ namespace CustomRP.Runtime {
                     lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask
                 ) {
                     _useShadowMask = true;
+                }
+
+                if (!_cullingResults.GetShadowCasterBounds(
+                        visibleLightIndex, out Bounds b)) {
+                    //如果没在实时光照范围内 只返回光照强度
+                    return new Vector4(-light.shadowStrength, 0f, 0f);
                 }
 
                 //我好烦他这个在参数里++ 真他吗不舒服 狗日的

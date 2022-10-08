@@ -55,15 +55,16 @@ public class MeshBall : MonoBehaviour {
             }
 
             var lightProbes = new SphericalHarmonicsL2[1023];
+            var occlusionProbes = new Vector4[1023];
             LightProbes.CalculateInterpolatedLightAndOcclusionProbes(
-                positions, lightProbes, null
+                positions, lightProbes, occlusionProbes
             );
             _block.CopySHCoefficientArraysFrom(lightProbes);
         }
 
         if (defaultDraw) {
             Graphics.DrawMeshInstanced(mesh, 0, material, _matrices, 1023, _block);
-           // Debug.Log("Mesh Ball Default Draw");
+            // Debug.Log("Mesh Ball Default Draw");
         }
         else {
             bool lightProbeVolumeEnable = lightProbeVolume && lightProbeVolume.enabled;
