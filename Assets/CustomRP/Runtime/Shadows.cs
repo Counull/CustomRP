@@ -37,6 +37,7 @@ namespace CustomRP.Runtime {
         };
 
         static readonly string[] ShadowMaskKeywords = {
+            "_SHADOW_MASK_ALWAYS",
             "_SHADOW_MASK_DISTANCE"
         };
 
@@ -85,7 +86,9 @@ namespace CustomRP.Runtime {
             }
 
             _buffer.BeginSample(BufferName);
-            SetKeywords(ShadowMaskKeywords, _useShadowMask ? 0 : -1);
+            SetKeywords(ShadowMaskKeywords,
+                _useShadowMask ? QualitySettings.shadowmaskMode == ShadowmaskMode.Shadowmask ? 0 : 1 : -1
+            );
             _buffer.EndSample(BufferName);
             ExecuteBuffer();
         }
@@ -105,6 +108,7 @@ namespace CustomRP.Runtime {
         public Vector3 ReserveDirectionalShadows(
             Light light, int visibleLightIndex
         ) {
+            
             if (
                 _shadowedDirectionalLightCount < MaxShadowedDirectionalLightCount &&
                 light.shadows != LightShadows.None && light.shadowStrength > 0f

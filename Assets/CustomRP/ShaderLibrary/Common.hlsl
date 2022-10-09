@@ -15,7 +15,7 @@
 #define  UNITY_PREV_MATRIX_M unity_PrevObjectToWorldArray
 #define UNITY_PREV_MATRIX_I_M unity_PrevWorldToObjectArray
 
-#if defined(_SHADOW_MASK_DISTANCE)
+#if defined(_SHADOW_MASK_ALWAYS) || defined(_SHADOW_MASK_DISTANCE)
     #define SHADOWS_SHADOWMASK //在UnityInstancing.hlsl被引入之前定义ShadowMask
 #endif
 

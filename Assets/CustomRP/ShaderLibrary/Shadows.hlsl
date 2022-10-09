@@ -39,13 +39,14 @@ CBUFFER_END
 
 struct ShadowMask
 {
+    bool always;
     bool distance;
     float4 shadows;
 };
 
 struct DirectionalShadowData
 {
-    float strength; //阴影强度
+    float strength; //当前fragment的阴影强度
     int tileIndex; //由层级和光源index换算出的具体采样shadowmap中的哪个贴图
     float normalBias;
 };
@@ -54,7 +55,7 @@ struct ShadowData
 {
     int cascadeIndex; //层级数
     float cascadeBlend; //级联混合
-    float strength; //阴影强度
+    float strength; //全局阴影强度
     ShadowMask shadowMask;
 };
 
@@ -93,7 +94,7 @@ float FilterDirectionalShadow(float3 positionSTS)
 float GetBakedShadow(ShadowMask mask)
 {
     float shadow = 1.0;
-    if (mask.distance)
+    if (mask.distance || mask.always)
     {
         shadow = mask.shadows.r;
     }
@@ -103,7 +104,7 @@ float GetBakedShadow(ShadowMask mask)
 
 float GetBakedShadow(ShadowMask mask, float strength)
 {
-    if (mask.distance)
+    if (mask.distance || mask.always)
     {
         return lerp(1.0, GetBakedShadow(mask), strength);
     }
@@ -111,10 +112,15 @@ float GetBakedShadow(ShadowMask mask, float strength)
 }
 
 float MixBakedAndRealtimeShadows(
-    ShadowData global, float shadow, float strength
-)
+    ShadowData global, float shadow, float strength)
 {
     float baked = GetBakedShadow(global.shadowMask);
+    if (global.shadowMask.always)
+    {
+        shadow = lerp(1.0, shadow, global.strength);
+        shadow = min(baked, shadow);
+        return lerp(1.0, shadow, strength);
+    }
     if (global.shadowMask.distance)
     {
         shadow = lerp(baked, shadow, global.strength);
@@ -160,10 +166,6 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
     {
         shadow = GetBakedShadow(global.shadowMask, abs(directional.strength));
     }
-    if (directional.strength <= 0.0)
-    {
-        shadow = 1.0;
-    }
     else
     {
         shadow = GetCascadedShadow(directional, global, surfaceWS);
@@ -183,6 +185,7 @@ float FadedShadowStrength(float distance, float scale, float fade)
 ShadowData GetShadowData(Surface surfaceWS)
 {
     ShadowData data;
+    data.shadowMask.always = false;
     data.shadowMask.distance = false;
     data.shadowMask.shadows = 1.0;
 
