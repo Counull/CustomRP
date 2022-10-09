@@ -13,7 +13,7 @@ namespace CustomRP.Runtime {
         const string BufferName = "Shadows";
         const int MaxShadowedDirectionalLightCount = 4, MaxCascades = 4;
 
-        private int _shadowedDirectionalLightCount;
+        private int ShadowedDirLightCount;
         private bool _useShadowMask;
 
         private static readonly int DirShadowAtlasId = Shader.PropertyToID("_DirectionalShadowAtlas"),
@@ -68,13 +68,13 @@ namespace CustomRP.Runtime {
             this._context = context;
             this._cullingResults = cullingResults;
             this._settings = settings;
-            _shadowedDirectionalLightCount = 0;
+            ShadowedDirLightCount = 0;
             _useShadowMask = false;
         }
 
 
         public void Render() {
-            if (_shadowedDirectionalLightCount > 0) {
+            if (ShadowedDirLightCount > 0) {
                 RenderDirectionalShadows();
             }
             else {
@@ -101,48 +101,52 @@ namespace CustomRP.Runtime {
         /// <param name="light">场景中的Light</param>
         /// <param name="visibleLightIndex">此Light对应的索引</param>
         /// <returns>
+        /// shader中会转化为DirectionalShadowData
         /// x：阴影强度shadowStrength 
         /// y：当前光源被安排在阴影图集内的偏移量
         /// z：light.shadowNormalBias
-        /// </returns>x为阴影强度 y为shadowmap中当前光照对应的贴图偏移量
-        public Vector3 ReserveDirectionalShadows(
-            Light light, int visibleLightIndex
-        ) {
-            
+        /// w:多光源阴影遮罩所使用的贴图通道 比如第一个光源为R通道第二个光源为G通道 共四个
+        /// </returns>
+        public Vector4 ReserveDirectionalShadows(
+            Light light, int visibleLightIndex) {
             if (
-                _shadowedDirectionalLightCount < MaxShadowedDirectionalLightCount &&
+                ShadowedDirLightCount < MaxShadowedDirectionalLightCount &&
                 light.shadows != LightShadows.None && light.shadowStrength > 0f
-                //  _cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b)
             ) {
-                _shadowedDirectionalLights[_shadowedDirectionalLightCount] =
-                    new ShadowedDirectionalLight {
-                        VisibleLightIndex = visibleLightIndex,
-                        SlopeScaleBias = light.shadowBias,
-                        NearPlaneOffset = light.shadowNearPlane,
-                    };
-
+                float maskChannel = -1;
                 LightBakingOutput lightBaking = light.bakingOutput;
                 if (
                     lightBaking.lightmapBakeType == LightmapBakeType.Mixed &&
                     lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask
                 ) {
                     _useShadowMask = true;
+                    maskChannel = lightBaking.occlusionMaskChannel;
                 }
-
                 if (!_cullingResults.GetShadowCasterBounds(
-                        visibleLightIndex, out Bounds b)) {
-                    //如果没在实时光照范围内 只返回光照强度
-                    return new Vector4(-light.shadowStrength, 0f, 0f);
+                        visibleLightIndex, out Bounds b
+                    )) {
+                    return new Vector4(-light.shadowStrength, 0f, 0f, maskChannel);
                 }
-
-                //我好烦他这个在参数里++ 真他吗不舒服 狗日的
-                return new Vector3(light.shadowStrength,
-                    _settings.directional.cascadeCount * _shadowedDirectionalLightCount++,
-                    light.shadowNormalBias
+                _shadowedDirectionalLights[ShadowedDirLightCount] =
+                    new ShadowedDirectionalLight {
+                        VisibleLightIndex = visibleLightIndex,
+                        SlopeScaleBias = light.shadowBias,
+                        NearPlaneOffset = light.shadowNearPlane
+                    };
+                return new Vector4(
+                    light.shadowStrength,
+                    _settings.directional.cascadeCount * ShadowedDirLightCount++,
+                    light.shadowNormalBias, maskChannel
                 );
             }
-
-            return Vector3.zero;
+            return new Vector4(0f, 0f, 0f, -1f);
+            
+            
+            
+           
+            
+            
+            
         }
 
 
@@ -163,13 +167,13 @@ namespace CustomRP.Runtime {
             _buffer.BeginSample(BufferName);
             ExecuteBuffer();
 
-            int tiles = _shadowedDirectionalLightCount * _settings.directional.cascadeCount;
+            int tiles = ShadowedDirLightCount * _settings.directional.cascadeCount;
             //分割数量应是二的幂数 这样重视可以进行整数除法
             //否则会遇到不对齐的问题浪费吞吐空间
             int split = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
             int tileSize = atlasSize / split;
 
-            for (int i = 0; i < _shadowedDirectionalLightCount; i++) {
+            for (int i = 0; i < ShadowedDirLightCount; i++) {
                 RenderDirectionalShadows(i, split, tileSize);
             }
 
