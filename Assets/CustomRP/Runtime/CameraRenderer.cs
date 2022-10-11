@@ -52,6 +52,7 @@ namespace CustomRP.Runtime {
                     | PerObjectData.ShadowMask
                     | PerObjectData.LightProbe
                     | PerObjectData.OcclusionProbe
+                    | PerObjectData.ReflectionProbes
                     | PerObjectData.LightProbeProxyVolume
                     | PerObjectData.OcclusionProbeProxyVolume
             };

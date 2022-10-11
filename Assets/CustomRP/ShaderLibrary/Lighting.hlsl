@@ -16,12 +16,12 @@ float3 GetLighting(Surface surface, BRDF brdf, Light light)
 
 float3 GetLighting(Surface surfaceWS, BRDF brdf, GI gi)
 {
-     ShadowData shadowData = GetShadowData(surfaceWS);
+    ShadowData shadowData = GetShadowData(surfaceWS);
     shadowData.shadowMask = gi.shadowMask;
 
-  //  return gi.shadowMask.shadows.rgb; 验证shadowMask
-    
-    float3 color = gi.diffuse * brdf.diffuse;
+    //  return gi.shadowMask.shadows.rgb; 验证shadowMask
+
+    float3 color = IndirectBRDF(surfaceWS, brdf, gi.diffuse, gi.specular);
     for (int i = 0; i < GetDirectionalLightCount(); i++)
     {
         const Light light = GetDirectionalLight(i, surfaceWS, shadowData);

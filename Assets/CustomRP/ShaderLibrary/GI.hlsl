@@ -27,9 +27,14 @@ SAMPLER(samplerunity_ProbeVolumeSH);
 TEXTURE2D(unity_ShadowMask);
 SAMPLER(samplerunity_ShadowMask);
 
+//天空盒
+TEXTURECUBE(unity_SpecCube0);
+SAMPLER(samplerunity_SpecCube0);
+
 struct GI
 {
     float3 diffuse;
+    float3 specular;
     ShadowMask shadowMask;
 };
 
@@ -110,11 +115,22 @@ float4 SampleBakedShadows(float2 lightMapUV, Surface surfaceWS)
     #endif
 }
 
+float3 SampleEnvironment(Surface surfaceWS)
+{
+    float3 uvw = reflect(-surfaceWS.viewDirection, surfaceWS.normal);
+
+    float4 environment = SAMPLE_TEXTURECUBE_LOD(
+        unity_SpecCube0, samplerunity_SpecCube0, uvw, 0.0
+    );
+    return environment.rgb;
+}
+
 
 GI GetGI(float2 lightMapUV, Surface surfaceWS)
 {
     GI gi;
     gi.diffuse = SampleLightMap(lightMapUV) + SampleLightProbe(surfaceWS);
+    gi.specular = SampleEnvironment(surfaceWS);
     gi.shadowMask.always = false;
     gi.shadowMask.distance = false;
     gi.shadowMask.shadows = 1.0;

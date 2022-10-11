@@ -275,6 +275,10 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6707843483045958221, guid: 9dace311e02824941acd6714ea2e111e, type: 3}
+      propertyPath: m_AnimateCrossFading
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9dace311e02824941acd6714ea2e111e, type: 3}
 --- !u!1 &1613061903
@@ -656,6 +660,10 @@ PrefabInstance:
     - target: {fileID: 1052709931983187293, guid: 9dace311e02824941acd6714ea2e111e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6707843483045958221, guid: 9dace311e02824941acd6714ea2e111e, type: 3}
+      propertyPath: m_AnimateCrossFading
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9dace311e02824941acd6714ea2e111e, type: 3}
