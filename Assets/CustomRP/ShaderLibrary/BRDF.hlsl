@@ -8,6 +8,7 @@ struct BRDF
     float3 diffuse;
     float3 specular;
     float roughness;
+    float perceptualRoughness;
 };
 
 //为非金属保留0.4的反射率
@@ -27,9 +28,9 @@ BRDF GetBRDF(Surface surface, bool applyAlphaToDiffuse = false)
         brdf.diffuse *= surface.alpha; // premultiplied alpha blending
     }
     brdf.specular = lerp(MIN_REFLECTIVITY, surface.color, surface.metallic);
-    float perceptualRoughness =
+    brdf.perceptualRoughness =
         PerceptualSmoothnessToPerceptualRoughness(surface.smoothness);
-    brdf.roughness = PerceptualRoughnessToRoughness(perceptualRoughness);
+    brdf.roughness = PerceptualRoughnessToRoughness(brdf.perceptualRoughness);
     return brdf;
 }
 
