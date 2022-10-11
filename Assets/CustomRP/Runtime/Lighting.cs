@@ -43,8 +43,8 @@ namespace CustomRP.Runtime {
         void SetupLights() {
             NativeArray<VisibleLight> visibleLights = _cullingResults.visibleLights;
             int dirLightCount = 0;
-            for (int i = 0; i < visibleLights.Length; i++) {
-                VisibleLight visibleLight = visibleLights[i];
+            foreach (var t in visibleLights) {
+                VisibleLight visibleLight = t;
                 if (visibleLight.lightType == LightType.Directional) {
                     SetupDirectionalLight(dirLightCount, ref visibleLight);
                     dirLightCount++;
