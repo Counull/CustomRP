@@ -3492,7 +3492,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: -3.0014992, z: 7.02e-43, w: -5.012646e-22}
+  m_BoundingSphereOverride: {x: 1.02e-43, y: 0, z: 0, w: 10.518883}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -4136,8 +4136,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseColor: {r: 1, g: 1, b: 1, a: 1}
   alphaCutoff: 0.5
-  metallic: 0.93
-  smoothness: 0.71
+  metallic: 0.66
+  smoothness: 0.75
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!135 &845975092
 SphereCollider:
@@ -5395,7 +5395,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 0, z: 0, w: 10.518883}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: -15.9298935}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0

@@ -9,6 +9,7 @@ struct BRDF
     float3 specular;
     float roughness;
     float perceptualRoughness;
+    float fresnel;
 };
 
 //为非金属保留0.4的反射率
@@ -31,6 +32,7 @@ BRDF GetBRDF(Surface surface, bool applyAlphaToDiffuse = false)
     brdf.perceptualRoughness =
         PerceptualSmoothnessToPerceptualRoughness(surface.smoothness);
     brdf.roughness = PerceptualRoughnessToRoughness(brdf.perceptualRoughness);
+    brdf.fresnel = saturate(surface.smoothness + 1.0 - oneMinusReflectivity);
     return brdf;
 }
 
@@ -53,7 +55,11 @@ float3 DirectBRDF(Surface surface, BRDF brdf, Light light)
 float3 IndirectBRDF(
     Surface surface, BRDF brdf, float3 diffuse, float3 specular)
 {
-    float3 reflection = specular * brdf.specular;
+    float fresnelStrength = surface.fresnelStrength *
+        Pow4(1.0 - saturate(dot(surface.normal, surface.viewDirection)));
+    //很不显然菲涅尔项天子驾之后球体边缘亮度会提高有一点白边
+    float3 reflection = specular * lerp(brdf.specular, brdf.fresnel, fresnelStrength);
+    //   float3 reflection = specular * brdf.specular;
     reflection /= brdf.roughness * brdf.roughness + 1.0;
     return diffuse * brdf.diffuse + reflection;
 }

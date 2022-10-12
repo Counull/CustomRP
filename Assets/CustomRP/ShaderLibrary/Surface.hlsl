@@ -11,6 +11,7 @@ struct Surface
     float depth;
     float metallic;
     float smoothness;
+    float fresnelStrength;
     float dither; //阴影噪声浮点
 };
 
