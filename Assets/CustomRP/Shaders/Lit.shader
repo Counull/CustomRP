@@ -25,7 +25,8 @@ Shader "Custom RP/Lit"
 
         [NoScaleOffset] _EmissionMap("Emission", 2D) = "white" {}
         [HDR] _EmissionColor("Emission", Color) = (0.0, 0.0, 0.0, 0.0)
-
+        _DetailMap("Details", 2D) = "linearGrey" {}
+        _DetailAlbedo("Detail Albedo", Range(0, 1)) = 1
 
         [Toggle(_PREMULTIPLY_ALPHA)] _PremulAlpha ("Premultiply Alpha", Float) = 0
 
