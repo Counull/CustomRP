@@ -1836,7 +1836,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &331147506
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2280,7 +2280,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7559980805857c4b910d3ccdc310c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseColor: {r: 0.28555533, g: 0.6509434, b: 0.44680533, a: 1}
+  baseColor: {r: 0.8396226, g: 0.45869103, b: 0.4000089, a: 1}
   alphaCutoff: 0.72
   metallic: 0.41
   smoothness: 0.19
@@ -3752,7 +3752,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 6.271147e-39, y: 4.1272477e+30, z: 2.760364e+20, w: 2.6785335e+20}
+  m_BoundingSphereOverride: {x: 7.57e-42, y: 6e-44, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -3934,7 +3934,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7559980805857c4b910d3ccdc310c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseColor: {r: 0.28555533, g: 0.6509434, b: 0.44680533, a: 1}
+  baseColor: {r: 0.97728777, g: 1, b: 0.25943398, a: 1}
   alphaCutoff: 0.75
   metallic: 0.1
   smoothness: 0.26
@@ -4279,7 +4279,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7559980805857c4b910d3ccdc310c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseColor: {r: 0.28555533, g: 0.6509434, b: 0.44680533, a: 1}
+  baseColor: {r: 1, g: 0.0990566, b: 0.8389911, a: 1}
   alphaCutoff: 0.73
   metallic: 0
   smoothness: 0.25
@@ -4624,7 +4624,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7559980805857c4b910d3ccdc310c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseColor: {r: 0.55478823, g: 0.30113026, b: 0.6320754, a: 1}
+  baseColor: {r: 0.8811325, g: 0.6516999, b: 0.9528302, a: 1}
   alphaCutoff: 0.5
   metallic: 0
   smoothness: 0.93
@@ -5513,7 +5513,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7559980805857c4b910d3ccdc310c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseColor: {r: 0.28555533, g: 0.6509434, b: 0.44680533, a: 1}
+  baseColor: {r: 0.5613208, g: 0.5952181, b: 1, a: 1}
   alphaCutoff: 0.4
   metallic: 0.65
   smoothness: 0.21
@@ -5655,7 +5655,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 0, z: 0, w: -0.00023775303}
+  m_BoundingSphereOverride: {x: 1e-45, y: 8.569e-42, z: 1.02e-43, w: 1.469727e-39}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -6011,7 +6011,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1098207116}
   m_LocalRotation: {x: -0, y: -0.32112962, z: -0, w: 0.9470353}
-  m_LocalPosition: {x: -2.137, y: 0.25, z: -2.241}
+  m_LocalPosition: {x: -1.495, y: 0.25, z: -2.118}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6066,9 +6066,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 1, g: 0, b: 0, a: 1}
-  alphaCutoff: 0.21
-  metallic: 0.43
-  smoothness: 0.67
+  alphaCutoff: 0.234
+  metallic: 0.039
+  smoothness: 0.85
   emissionColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!135 &1117054698
 SphereCollider:
@@ -7605,7 +7605,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1428339882}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.59, y: 0.5, z: -1.65}
+  m_LocalPosition: {x: -1.231, y: 0.5, z: -1.282}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

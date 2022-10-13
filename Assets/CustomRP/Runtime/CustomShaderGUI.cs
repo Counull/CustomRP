@@ -1,8 +1,12 @@
-using UnityEditor;
+
+#if UNITY_EDITOR
+
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEditor;
 
 //***他必须在默认的Namespace里
+
 public class CustomShaderGUI : ShaderGUI {
     private enum ShadowMode {
         On,
@@ -13,8 +17,9 @@ public class CustomShaderGUI : ShaderGUI {
 
 
     MaterialEditor _editor;
-    Object[] _materials;
     MaterialProperty[] _properties;
+    Object[] _materials;
+
     bool _showPresets;
 
 
@@ -203,13 +208,14 @@ public class CustomShaderGUI : ShaderGUI {
     }
 
 
-    void CopyLightMappingProperties () {
+    void CopyLightMappingProperties() {
         MaterialProperty mainTex = FindProperty("_MainTex", _properties, false);
         MaterialProperty baseMap = FindProperty("_BaseMap", _properties, false);
         if (mainTex != null && baseMap != null) {
             mainTex.textureValue = baseMap.textureValue;
             mainTex.textureScaleAndOffset = baseMap.textureScaleAndOffset;
         }
+
         MaterialProperty color = FindProperty("_Color", _properties, false);
         MaterialProperty baseColor =
             FindProperty("_BaseColor", _properties, false);
@@ -218,3 +224,4 @@ public class CustomShaderGUI : ShaderGUI {
         }
     }
 }
+#endif

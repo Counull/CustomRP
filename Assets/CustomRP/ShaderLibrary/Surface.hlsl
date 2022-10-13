@@ -10,6 +10,7 @@ struct Surface
     float alpha;
     float depth;
     float metallic;
+    float occlusion;
     float smoothness;
     float fresnelStrength;
     float dither; //阴影噪声浮点

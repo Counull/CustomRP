@@ -61,6 +61,7 @@ float3 IndirectBRDF(
     float3 reflection = specular * lerp(brdf.specular, brdf.fresnel, fresnelStrength);
     //   float3 reflection = specular * brdf.specular;
     reflection /= brdf.roughness * brdf.roughness + 1.0;
-    return diffuse * brdf.diffuse + reflection;
+    //surface.occlusion为Mask贴图的G通道 只对间接光起作用
+    return (diffuse * brdf.diffuse + reflection) * surface.occlusion;
 }
 #endif
