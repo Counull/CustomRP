@@ -27,7 +27,8 @@ Shader "Custom RP/Lit"
         [HDR] _EmissionColor("Emission", Color) = (0.0, 0.0, 0.0, 0.0)
         _DetailMap("Details", 2D) = "linearGrey" {}
         _DetailAlbedo("Detail Albedo", Range(0, 1)) = 1
-
+        _DetailSmoothness("Detail Smoothness", Range(0, 1)) = 1
+        
         [Toggle(_PREMULTIPLY_ALPHA)] _PremulAlpha ("Premultiply Alpha", Float) = 0
 
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src Blend", Float) = 1

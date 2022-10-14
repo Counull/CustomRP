@@ -21,6 +21,7 @@ UNITY_DEFINE_INSTANCED_PROP(float, _Occlusion)
 UNITY_DEFINE_INSTANCED_PROP(float, _Smoothness)
 UNITY_DEFINE_INSTANCED_PROP(float, _Fresnel)
 UNITY_DEFINE_INSTANCED_PROP(float, _DetailAlbedo)
+UNITY_DEFINE_INSTANCED_PROP(float, _DetailSmoothness)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 
@@ -38,6 +39,8 @@ float2 TransformDetailUV(float2 detailUV)
 
 float4 GetDetail(float2 detailUV)
 {
+    // ANySNx R albedo ，b为smoothness
+    // detail normal vector's XY components in AG
     float4 map = SAMPLE_TEXTURE2D(_DetailMap, sampler_DetailMap, detailUV);
     return map * 2.0 - 1.0;
 }
@@ -45,6 +48,7 @@ float4 GetDetail(float2 detailUV)
 float4 GetMask(float2 baseUV)
 {
     return SAMPLE_TEXTURE2D(_MaskMap, sampler_BaseMap, baseUV);
+   // r为Metallic g为Occlusion b为Detail相关 a为Smoothness
 }
 
 float4 GetBase(float2 baseUV, float2 detailUV = 0.0)
@@ -79,10 +83,15 @@ float GetOcclusion(float2 baseUV)
     return occlusion;
 }
 
-float GetSmoothness(float2 baseUV)
+float GetSmoothness(float2 baseUV, float2 detailUV = 0.0)
 {
     float smoothness = INPUT_PROP(_Smoothness);
     smoothness *= GetMask(baseUV).a;
+
+    float detail = GetDetail(detailUV).b * INPUT_PROP(_DetailSmoothness);
+    float mask = GetMask(baseUV).b;
+    smoothness = lerp(smoothness, detail < 0.0 ? 0.0 : 1.0, abs(detail) * mask);
+    
     return smoothness;
 }
 
