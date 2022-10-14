@@ -23,15 +23,17 @@ Shader "Custom RP/Lit"
         _Smoothness ("Smoothness", Range(0, 1)) = 0.5
         _Fresnel ("Fresnel", Range(0, 1)) = 1
 
+        [Toggle(_NORMAL_MAP)] _NormalMapToggle ("Normal Map", Float) = 0
         [NoScaleOffset] _NormalMap("Normals", 2D) = "bump" {}
         _NormalScale("Normal Scale", Range(0, 1)) = 1
 
         [NoScaleOffset] _EmissionMap("Emission", 2D) = "white" {}
         [HDR] _EmissionColor("Emission", Color) = (0.0, 0.0, 0.0, 0.0)
         _DetailMap("Details", 2D) = "linearGrey" {}
+        [NoScaleOffset] _DetailNormalMap("Detail Normals", 2D) = "bump" {}
         _DetailAlbedo("Detail Albedo", Range(0, 1)) = 1
         _DetailSmoothness("Detail Smoothness", Range(0, 1)) = 1
-
+        _DetailNormalScale("Detail Normal Scale", Range(0, 1)) = 1
         [Toggle(_PREMULTIPLY_ALPHA)] _PremulAlpha ("Premultiply Alpha", Float) = 0
 
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src Blend", Float) = 1
