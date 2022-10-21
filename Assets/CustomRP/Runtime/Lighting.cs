@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 namespace CustomRP.Runtime {
     public class Lighting {
         const string BufferName = "Lighting";
-        const int MaxDirLightCount = 4;
+        const int MaxDirLightCount = 4, MaxOtherLightCount = 64;
         readonly Shadows _shadows = new Shadows();
 
         static readonly int
@@ -14,11 +14,18 @@ namespace CustomRP.Runtime {
             DirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections"),
             DirLightShadowDataId = Shader.PropertyToID("_DirectionalLightShadowData");
 
+        private static readonly int otherLightCountId = Shader.PropertyToID("_OtherLightCount"),
+            otherLightColorsId = Shader.PropertyToID("_OtherLightColors"),
+            otherLightPositionsID = Shader.PropertyToID("_OtherLightPositions");
+
 
         static readonly Vector4[]
             DirLightColors = new Vector4[MaxDirLightCount],
             DirLightDirections = new Vector4[MaxDirLightCount],
             DirLightShadowData = new Vector4[MaxDirLightCount];
+
+        static readonly Vector4[] otherLightColors = new Vector4[MaxOtherLightCount],
+            otherLightPositions = new Vector4[MaxOtherLightCount];
 
         readonly CommandBuffer _buffer = new CommandBuffer {
             name = BufferName
@@ -42,22 +49,38 @@ namespace CustomRP.Runtime {
 
         void SetupLights() {
             NativeArray<VisibleLight> visibleLights = _cullingResults.visibleLights;
-            int dirLightCount = 0;
+            int dirLightCount = 0, otherLightCount = 0;
             foreach (var t in visibleLights) {
                 VisibleLight visibleLight = t;
-                if (visibleLight.lightType == LightType.Directional) {
-                    SetupDirectionalLight(dirLightCount, ref visibleLight);
-                    dirLightCount++;
-                    if (dirLightCount >= MaxDirLightCount) {
+
+                switch (visibleLight.lightType) {
+                    case LightType.Directional:
+                        if (dirLightCount < MaxDirLightCount) {
+                            SetupDirectionalLight(dirLightCount++, ref visibleLight);
+                        }
+
                         break;
-                    }
+                    case LightType.Point:
+                        if (otherLightCount < MaxOtherLightCount) {
+                            SetupPointLight(otherLightCount++, ref visibleLight);
+                        }
+                        break;
                 }
             }
 
-            _buffer.SetGlobalInt(DirLightCountId, visibleLights.Length);
-            _buffer.SetGlobalVectorArray(DirLightColorsId, DirLightColors);
-            _buffer.SetGlobalVectorArray(DirLightDirectionsId, DirLightDirections);
-            _buffer.SetGlobalVectorArray(DirLightShadowDataId, DirLightShadowData);
+            _buffer.SetGlobalInt(DirLightCountId,  dirLightCount);
+
+            if (dirLightCount > 0) {
+                _buffer.SetGlobalVectorArray(DirLightColorsId, DirLightColors);
+                _buffer.SetGlobalVectorArray(DirLightDirectionsId, DirLightDirections);
+                _buffer.SetGlobalVectorArray(DirLightShadowDataId, DirLightShadowData);
+            }
+
+            _buffer.SetGlobalInt(otherLightCountId, otherLightCount);
+            if (otherLightCount > 0) {
+                _buffer.SetGlobalVectorArray(otherLightColorsId, otherLightColors);
+                _buffer.SetGlobalVectorArray(otherLightPositionsID, otherLightPositions);
+            }
         }
 
 
@@ -76,6 +99,12 @@ namespace CustomRP.Runtime {
             //  | 0  0  0 1|
             DirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
             DirLightShadowData[index] = _shadows.ReserveDirectionalShadows(visibleLight.light, index);
+        }
+
+
+        void SetupPointLight(int index, ref VisibleLight visibleLight) {
+            otherLightColors[index] = visibleLight.finalColor;
+            otherLightPositions[index] = visibleLight.localToWorldMatrix.GetColumn(3);
         }
 
         public void Cleanup() {
