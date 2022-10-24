@@ -60,12 +60,17 @@ Light GetDirectionalLight(int index, Surface surfaceWS, ShadowData shadowData)
     return light;
 }
 
-Light GetOtherLight (int index, Surface surfaceWS, ShadowData shadowData) {
+Light GetOtherLight(int index, Surface surfaceWS, ShadowData shadowData)
+{
     Light light;
     light.color = _OtherLightColors[index].rgb;
     float3 ray = _OtherLightPositions[index].xyz - surfaceWS.position;
     light.direction = normalize(ray);
-    light.attenuation = 1.0;
+    float distanceSqr = max(dot(ray, ray), 0.00001);
+    float rangeAttenuation = Square(
+        saturate(1.0 - Square(distanceSqr * _OtherLightPositions[index].w))
+    );
+    light.attenuation = rangeAttenuation / distanceSqr;
     return light;
 }
 

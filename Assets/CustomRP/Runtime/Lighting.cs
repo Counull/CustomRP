@@ -64,11 +64,12 @@ namespace CustomRP.Runtime {
                         if (otherLightCount < MaxOtherLightCount) {
                             SetupPointLight(otherLightCount++, ref visibleLight);
                         }
+
                         break;
                 }
             }
 
-            _buffer.SetGlobalInt(DirLightCountId,  dirLightCount);
+            _buffer.SetGlobalInt(DirLightCountId, dirLightCount);
 
             if (dirLightCount > 0) {
                 _buffer.SetGlobalVectorArray(DirLightColorsId, DirLightColors);
@@ -104,7 +105,9 @@ namespace CustomRP.Runtime {
 
         void SetupPointLight(int index, ref VisibleLight visibleLight) {
             otherLightColors[index] = visibleLight.finalColor;
-            otherLightPositions[index] = visibleLight.localToWorldMatrix.GetColumn(3);
+            Vector4 position = visibleLight.localToWorldMatrix.GetColumn(3);
+            position.w = 1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
+            otherLightPositions[index] = position;
         }
 
         public void Cleanup() {
