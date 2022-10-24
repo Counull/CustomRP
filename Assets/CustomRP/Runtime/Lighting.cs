@@ -16,7 +16,9 @@ namespace CustomRP.Runtime {
 
         private static readonly int otherLightCountId = Shader.PropertyToID("_OtherLightCount"),
             otherLightColorsId = Shader.PropertyToID("_OtherLightColors"),
-            otherLightPositionsID = Shader.PropertyToID("_OtherLightPositions");
+            otherLightPositionsID = Shader.PropertyToID("_OtherLightPositions"),
+            otherLightDirectionsId = Shader.PropertyToID("_OtherLightDirections"),
+            otherLightSpotAnglesId = Shader.PropertyToID("_OtherLightSpotAngles");
 
 
         static readonly Vector4[]
@@ -25,7 +27,9 @@ namespace CustomRP.Runtime {
             DirLightShadowData = new Vector4[MaxDirLightCount];
 
         static readonly Vector4[] otherLightColors = new Vector4[MaxOtherLightCount],
-            otherLightPositions = new Vector4[MaxOtherLightCount];
+            otherLightPositions = new Vector4[MaxOtherLightCount],
+            otherLightDirections = new Vector4[MaxOtherLightCount],
+            otherLightSpotAngles = new Vector4[MaxOtherLightCount];
 
         readonly CommandBuffer _buffer = new CommandBuffer {
             name = BufferName
@@ -66,6 +70,13 @@ namespace CustomRP.Runtime {
                         }
 
                         break;
+
+                    case LightType.Spot:
+                        if (otherLightCount < MaxOtherLightCount) {
+                            SetupSpotLight(otherLightCount++, ref visibleLight);
+                        }
+
+                        break;
                 }
             }
 
@@ -81,6 +92,10 @@ namespace CustomRP.Runtime {
             if (otherLightCount > 0) {
                 _buffer.SetGlobalVectorArray(otherLightColorsId, otherLightColors);
                 _buffer.SetGlobalVectorArray(otherLightPositionsID, otherLightPositions);
+                _buffer.SetGlobalVectorArray(otherLightDirectionsId, otherLightDirections);
+                _buffer.SetGlobalVectorArray(
+                    otherLightSpotAnglesId, otherLightSpotAngles
+                );
             }
         }
 
@@ -108,7 +123,28 @@ namespace CustomRP.Runtime {
             Vector4 position = visibleLight.localToWorldMatrix.GetColumn(3);
             position.w = 1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
             otherLightPositions[index] = position;
+            otherLightSpotAngles[index] = new Vector4(0f, 1f);
         }
+
+        void SetupSpotLight(int index, ref VisibleLight visibleLight) {
+            otherLightColors[index] = visibleLight.finalColor;
+            Vector4 position = visibleLight.localToWorldMatrix.GetColumn(3);
+            position.w =
+                1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
+            otherLightPositions[index] = position;
+            otherLightDirections[index] =
+                -visibleLight.localToWorldMatrix.GetColumn(2);
+
+            //计算聚光灯的衰减
+            Light light = visibleLight.light;
+            float innerCos = Mathf.Cos(Mathf.Deg2Rad * 0.5f * light.innerSpotAngle);
+            float outerCos = Mathf.Cos(Mathf.Deg2Rad * 0.5f * visibleLight.spotAngle);
+            float angleRangeInv = 1f / Mathf.Max(innerCos - outerCos, 0.001f);
+            otherLightSpotAngles[index] = new Vector4(
+                angleRangeInv, -outerCos * angleRangeInv
+            );
+        }
+
 
         public void Cleanup() {
             _shadows.Cleanup();
