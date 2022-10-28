@@ -18,7 +18,8 @@ namespace CustomRP.Runtime {
             otherLightColorsId = Shader.PropertyToID("_OtherLightColors"),
             otherLightPositionsID = Shader.PropertyToID("_OtherLightPositions"),
             otherLightDirectionsId = Shader.PropertyToID("_OtherLightDirections"),
-            otherLightSpotAnglesId = Shader.PropertyToID("_OtherLightSpotAngles");
+            otherLightSpotAnglesId = Shader.PropertyToID("_OtherLightSpotAngles"),
+            otherLightShadowDataId = Shader.PropertyToID("_OtherLightShadowData");
 
 
         static readonly Vector4[]
@@ -29,7 +30,8 @@ namespace CustomRP.Runtime {
         static readonly Vector4[] otherLightColors = new Vector4[MaxOtherLightCount],
             otherLightPositions = new Vector4[MaxOtherLightCount],
             otherLightDirections = new Vector4[MaxOtherLightCount],
-            otherLightSpotAngles = new Vector4[MaxOtherLightCount];
+            otherLightSpotAngles = new Vector4[MaxOtherLightCount],
+            otherLightShadowData = new Vector4[MaxOtherLightCount];
 
         readonly CommandBuffer _buffer = new CommandBuffer {
             name = BufferName
@@ -93,9 +95,8 @@ namespace CustomRP.Runtime {
                 _buffer.SetGlobalVectorArray(otherLightColorsId, otherLightColors);
                 _buffer.SetGlobalVectorArray(otherLightPositionsID, otherLightPositions);
                 _buffer.SetGlobalVectorArray(otherLightDirectionsId, otherLightDirections);
-                _buffer.SetGlobalVectorArray(
-                    otherLightSpotAnglesId, otherLightSpotAngles
-                );
+                _buffer.SetGlobalVectorArray(otherLightSpotAnglesId, otherLightSpotAngles);
+                _buffer.SetGlobalVectorArray(otherLightShadowDataId, otherLightShadowData);
             }
         }
 
@@ -124,6 +125,8 @@ namespace CustomRP.Runtime {
             position.w = 1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
             otherLightPositions[index] = position;
             otherLightSpotAngles[index] = new Vector4(0f, 1f);
+            Light light = visibleLight.light;
+            otherLightShadowData[index] = _shadows.ReserveOtherShadows(light, index);
         }
 
         void SetupSpotLight(int index, ref VisibleLight visibleLight) {
@@ -143,6 +146,7 @@ namespace CustomRP.Runtime {
             otherLightSpotAngles[index] = new Vector4(
                 angleRangeInv, -outerCos * angleRangeInv
             );
+            otherLightShadowData[index] = _shadows.ReserveOtherShadows(light, index);
         }
 
 
