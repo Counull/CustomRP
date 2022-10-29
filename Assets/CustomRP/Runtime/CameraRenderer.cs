@@ -18,7 +18,7 @@ namespace CustomRP.Runtime {
         };
 
         public void Render(ScriptableRenderContext context, Camera renderingCamera, bool useDynamicBatching,
-            bool useGPUInstancing, ShadowSettings shadowSettings) {
+            bool useGPUInstancing, bool useLightsPerObject, ShadowSettings shadowSettings) {
             this._context = context;
             this._camera = renderingCamera;
             PrepareBuffer();
@@ -30,19 +30,22 @@ namespace CustomRP.Runtime {
             //渲染光照和阴影
             _buffer.BeginSample(SampleName);
             ExecuteBuffer();
-            _lighting.Setup(context, _cullingResults, shadowSettings);
+            _lighting.Setup(context, _cullingResults, shadowSettings,useLightsPerObject);
             _buffer.EndSample(SampleName);
 
             Setup();
-            DrawVisibleGeometry(useDynamicBatching, useGPUInstancing);
+            DrawVisibleGeometry(useDynamicBatching, useGPUInstancing, useLightsPerObject);
             DrawUnsupportedShaders();
             DrawGizmos();
             _lighting.Cleanup();
             Submit();
         }
 
-        private void DrawVisibleGeometry(bool useDynamicBatching, bool useGPUInstancing) {
+        private void DrawVisibleGeometry(bool useDynamicBatching, bool useGPUInstancing, bool useLightsPerObject) {
             //Draw Opaque
+            PerObjectData lightsPerObjectFlags = useLightsPerObject
+                ? PerObjectData.LightData | PerObjectData.LightIndices
+                : PerObjectData.None;
             var sortingSettings = new SortingSettings(_camera) {criteria = SortingCriteria.CommonOpaque};
             var drawingSettings = new DrawingSettings(UnlitShaderTagId, sortingSettings) {
                 enableDynamicBatching = useDynamicBatching,
@@ -55,6 +58,7 @@ namespace CustomRP.Runtime {
                     | PerObjectData.ReflectionProbes
                     | PerObjectData.LightProbeProxyVolume
                     | PerObjectData.OcclusionProbeProxyVolume
+                    | lightsPerObjectFlags
             };
             drawingSettings.SetShaderPassName(1, LitShaderTagId);
             var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);

@@ -5,14 +5,17 @@ using UnityEngine.Serialization;
 namespace CustomRP.Runtime {
     [CreateAssetMenu(menuName = "Rendering/Custom Render Pipeline")]
     public class CustomRenderPipelineAsset : RenderPipelineAsset {
-        [SerializeField] bool useDynamicBatching = true;
+        [SerializeField] bool
+            useDynamicBatching = true,
+            useGPUInstancing = true,
+            useSRPBatcher = true,
+            useLightsPerObject = true;
 
-        [SerializeField] bool useGPUInstancing = true;
+        [SerializeField] ShadowSettings shadows = default;
 
-         [SerializeField] private bool useSrpBatcher = true;
-         [SerializeField] ShadowSettings shadows = default;
         protected override RenderPipeline CreatePipeline() {
-            return new CustomRenderPipeline(useDynamicBatching, useGPUInstancing, useSrpBatcher,shadows);
+            return new CustomRenderPipeline(useDynamicBatching, useGPUInstancing, useSRPBatcher, useLightsPerObject,
+                shadows);
         }
     }
 }

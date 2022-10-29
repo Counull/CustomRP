@@ -8,6 +8,8 @@ namespace CustomRP.Runtime {
         const int MaxDirLightCount = 4, MaxOtherLightCount = 64;
         readonly Shadows _shadows = new Shadows();
 
+        const string LightsPerObjectKeyword = "_LIGHTS_PER_OBJECT";
+
         static readonly int
             DirLightCountId = Shader.PropertyToID("_DirectionalLightCount"),
             DirLightColorsId = Shader.PropertyToID("_DirectionalLightColors"),
@@ -40,12 +42,12 @@ namespace CustomRP.Runtime {
         private CullingResults _cullingResults;
 
         public void Setup(ScriptableRenderContext context,
-            CullingResults cullingResults, ShadowSettings shadowSettings) {
+            CullingResults cullingResults, ShadowSettings shadowSettings, bool useLightsPerObject) {
             this._cullingResults = cullingResults;
             _buffer.BeginSample(BufferName);
             //SetupDirectionalLight();
             _shadows.Setup(context, cullingResults, shadowSettings);
-            SetupLights();
+            SetupLights(useLightsPerObject);
             _shadows.Render();
             _buffer.EndSample(BufferName);
 
@@ -53,12 +55,15 @@ namespace CustomRP.Runtime {
             _buffer.Clear();
         }
 
-        void SetupLights() {
+        void SetupLights(bool useLightsPerObject) {
+            NativeArray<int> indexMap = useLightsPerObject ? _cullingResults.GetLightIndexMap(Allocator.Temp) : default;
             NativeArray<VisibleLight> visibleLights = _cullingResults.visibleLights;
-            int dirLightCount = 0, otherLightCount = 0;
-            foreach (var t in visibleLights) {
-                VisibleLight visibleLight = t;
 
+            int dirLightCount = 0, otherLightCount = 0;
+            int i;
+            for (i = 0; i < visibleLights.Length; i++) {
+                int newIndex = -1;
+                VisibleLight visibleLight = visibleLights[i];
                 switch (visibleLight.lightType) {
                     case LightType.Directional:
                         if (dirLightCount < MaxDirLightCount) {
@@ -68,6 +73,7 @@ namespace CustomRP.Runtime {
                         break;
                     case LightType.Point:
                         if (otherLightCount < MaxOtherLightCount) {
+                            newIndex = otherLightCount;
                             SetupPointLight(otherLightCount++, ref visibleLight);
                         }
 
@@ -75,11 +81,29 @@ namespace CustomRP.Runtime {
 
                     case LightType.Spot:
                         if (otherLightCount < MaxOtherLightCount) {
+                            newIndex = otherLightCount;
                             SetupSpotLight(otherLightCount++, ref visibleLight);
                         }
 
                         break;
                 }
+
+                if (useLightsPerObject) {
+                    indexMap[i] = newIndex;
+                }
+            }
+
+            if (useLightsPerObject) {
+                for (; i < indexMap.Length; i++) {
+                    indexMap[i] = -1;
+                }
+
+                _cullingResults.SetLightIndexMap(indexMap);
+                indexMap.Dispose();
+                Shader.EnableKeyword(LightsPerObjectKeyword);
+            }
+            else {
+                Shader.DisableKeyword(LightsPerObjectKeyword);
             }
 
             _buffer.SetGlobalInt(DirLightCountId, dirLightCount);
