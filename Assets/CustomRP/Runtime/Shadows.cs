@@ -11,9 +11,9 @@ namespace CustomRP.Runtime {
         }
 
         const string BufferName = "Shadows";
-        const int MaxShadowedDirectionalLightCount = 4, MaxCascades = 4;
+        const int MaxShadowedDirectionalLightCount = 4, MaxShadowedOtherLightCount = 16, MaxCascades = 4;
 
-        private int ShadowedDirLightCount;
+        private int _shadowedDirLightCount, _shadowedOtherLightCount;
         private bool _useShadowMask;
 
         private static readonly int DirShadowAtlasId = Shader.PropertyToID("_DirectionalShadowAtlas"),
@@ -23,12 +23,20 @@ namespace CustomRP.Runtime {
             // ShadowDistanceId = Shader.PropertyToID("_ShadowDistance");
             CascadeDataId = Shader.PropertyToID("_CascadeData"),
             ShadowAtlasSizeId = Shader.PropertyToID("_ShadowAtlasSize"),
-            ShadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade");
+            ShadowDistanceFadeId = Shader.PropertyToID("_ShadowDistanceFade"),
+            OtherShadowAtlasId = Shader.PropertyToID("_OtherShadowAtlas"),
+            OtherShadowMatricesId = Shader.PropertyToID("_OtherShadowMatrices");
 
         private static readonly string[] DirectionalFilterKeywords = {
             "_DIRECTIONAL_PCF3",
             "_DIRECTIONAL_PCF5",
             "_DIRECTIONAL_PCF7",
+        };
+
+        private static readonly string[] OtherFilterKeywords = {
+            "_OTHER_PCF3",
+            "_OTHER_PCF5",
+            "_OTHER_PCF7",
         };
 
         static readonly string[] CascadeBlendKeywords = {
@@ -42,7 +50,8 @@ namespace CustomRP.Runtime {
         };
 
         private static readonly Matrix4x4[]
-            DirShadowMatrices = new Matrix4x4[MaxShadowedDirectionalLightCount * MaxCascades];
+            DirShadowMatrices = new Matrix4x4[MaxShadowedDirectionalLightCount * MaxCascades],
+            OtherShadowMatrices = new Matrix4x4[MaxShadowedOtherLightCount];
 
         static readonly Vector4[] CascadeCullingSpheres = new Vector4[MaxCascades],
             CascadeData = new Vector4[MaxCascades];
@@ -61,6 +70,7 @@ namespace CustomRP.Runtime {
 
         ShadowSettings _settings;
 
+        Vector4 _atlasSizes;
 
         public void Setup(
             ScriptableRenderContext context, CullingResults cullingResults,
@@ -68,13 +78,14 @@ namespace CustomRP.Runtime {
             this._context = context;
             this._cullingResults = cullingResults;
             this._settings = settings;
-            ShadowedDirLightCount = 0;
+            _shadowedDirLightCount = 0;
+            _shadowedOtherLightCount = 0;
             _useShadowMask = false;
         }
 
 
         public void Render() {
-            if (ShadowedDirLightCount > 0) {
+            if (_shadowedDirLightCount > 0) {
                 RenderDirectionalShadows();
             }
             else {
@@ -85,10 +96,31 @@ namespace CustomRP.Runtime {
                 );
             }
 
+            if (_shadowedOtherLightCount > 0) {
+                RenderOtherShadows();
+            }
+            else {
+                _buffer.SetGlobalTexture(OtherShadowAtlasId, DirShadowAtlasId);
+            }
+
             _buffer.BeginSample(BufferName);
             SetKeywords(ShadowMaskKeywords,
                 _useShadowMask ? QualitySettings.shadowmaskMode == ShadowmaskMode.Shadowmask ? 0 : 1 : -1
             );
+
+            _buffer.SetGlobalInt(
+                CascadeCountId,
+                _shadowedDirLightCount > 0 ? _settings.directional.cascadeCount : 0);
+            float f = 1f - _settings.directional.cascadeFade;
+            _buffer.SetGlobalVector(
+                ShadowDistanceFadeId, new Vector4(
+                    // (1 - d / m) / f 插值 在此处把m和f变为倒数可避免在shader里进行除法运算储存为xy
+                    // z中是为级联淡出准备的参数f = 1 - square(1 - f) 
+                    1f / _settings.maxDistance, 1f / _settings.distanceFade,
+                    1f / (1f - f * f)
+                )
+            );
+            _buffer.SetGlobalVector(ShadowAtlasSizeId, _atlasSizes);
             _buffer.EndSample(BufferName);
             ExecuteBuffer();
         }
@@ -110,7 +142,7 @@ namespace CustomRP.Runtime {
         public Vector4 ReserveDirectionalShadows(
             Light light, int visibleLightIndex) {
             if (
-                ShadowedDirLightCount < MaxShadowedDirectionalLightCount &&
+                _shadowedDirLightCount < MaxShadowedDirectionalLightCount &&
                 light.shadows != LightShadows.None && light.shadowStrength > 0f
             ) {
                 float maskChannel = -1;
@@ -129,7 +161,7 @@ namespace CustomRP.Runtime {
                     return new Vector4(-light.shadowStrength, 0f, 0f, maskChannel);
                 }
 
-                _shadowedDirectionalLights[ShadowedDirLightCount] =
+                _shadowedDirectionalLights[_shadowedDirLightCount] =
                     new ShadowedDirectionalLight {
                         VisibleLightIndex = visibleLightIndex,
                         SlopeScaleBias = light.shadowBias,
@@ -137,7 +169,7 @@ namespace CustomRP.Runtime {
                     };
                 return new Vector4(
                     light.shadowStrength,
-                    _settings.directional.cascadeCount * ShadowedDirLightCount++,
+                    _settings.directional.cascadeCount * _shadowedDirLightCount++,
                     light.shadowNormalBias, maskChannel
                 );
             }
@@ -147,21 +179,32 @@ namespace CustomRP.Runtime {
 
 
         public Vector4 ReserveOtherShadows(Light light, int visibleLightIndex) {
-            if (light.shadows != LightShadows.None && light.shadowStrength > 0f) {
-                LightBakingOutput lightBaking = light.bakingOutput;
-                if (
-                    lightBaking.lightmapBakeType == LightmapBakeType.Mixed &&
-                    lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask
-                ) {
-                    _useShadowMask = true;
-                    return new Vector4(
-                        light.shadowStrength, 0f, 0f,
-                        lightBaking.occlusionMaskChannel
-                    );
-                }
+            if (light.shadows == LightShadows.None && light.shadowStrength <= 0f) {
+                return new Vector4(0f, 0f, 0f, -1f);
             }
 
-            return new Vector4(0f, 0f, 0f, -1f);
+            float maskChannel = -1f;
+            LightBakingOutput lightBaking = light.bakingOutput;
+            if (
+                lightBaking.lightmapBakeType == LightmapBakeType.Mixed &&
+                lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask
+            ) {
+                _useShadowMask = true;
+                maskChannel = lightBaking.occlusionMaskChannel;
+            }
+
+
+            if (
+                _shadowedOtherLightCount >= MaxShadowedOtherLightCount ||
+                !_cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b)
+            ) {
+                return new Vector4(-light.shadowStrength, 0f, 0f, maskChannel);
+            }
+
+            return new Vector4(
+                light.shadowStrength, _shadowedOtherLightCount++, 0f,
+                maskChannel
+            );
         }
 
 
@@ -171,6 +214,8 @@ namespace CustomRP.Runtime {
         /// </summary>
         void RenderDirectionalShadows() {
             int atlasSize = (int) _settings.directional.atlasSize;
+            _atlasSizes.x = atlasSize;
+            _atlasSizes.y = 1f / atlasSize;
             //使用纹理的property ID 作为参数 声明需要commendBuffer创建一张正方形纹理
             _buffer.GetTemporaryRT(DirShadowAtlasId, atlasSize, atlasSize
                 , 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
@@ -182,17 +227,16 @@ namespace CustomRP.Runtime {
             _buffer.BeginSample(BufferName);
             ExecuteBuffer();
 
-            int tiles = ShadowedDirLightCount * _settings.directional.cascadeCount;
+            int tiles = _shadowedDirLightCount * _settings.directional.cascadeCount;
             //分割数量应是二的幂数 这样重视可以进行整数除法
             //否则会遇到不对齐的问题浪费吞吐空间
             int split = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
             int tileSize = atlasSize / split;
 
-            for (int i = 0; i < ShadowedDirLightCount; i++) {
+            for (int i = 0; i < _shadowedDirLightCount; i++) {
                 RenderDirectionalShadows(i, split, tileSize);
             }
 
-            _buffer.SetGlobalInt(CascadeCountId, _settings.directional.cascadeCount);
             _buffer.SetGlobalVectorArray(CascadeCullingSpheresId, CascadeCullingSpheres);
             _buffer.SetGlobalMatrixArray(DirShadowMatricesId, DirShadowMatrices);
             _buffer.SetGlobalVectorArray(CascadeDataId, CascadeData);
@@ -201,21 +245,46 @@ namespace CustomRP.Runtime {
 
             //此处阴影淡出分为两部分 一个是阴影最远距离的淡入参数存储为xy只影响与最大距离相关的淡入淡出，另一个是最大级联两侧的淡入淡出
 
-
-            float f = 1f - _settings.directional.cascadeFade;
-            _buffer.SetGlobalVector(
-                ShadowDistanceFadeId,
-                // (1 - d / m) / f 插值 在此处把m和f变为倒数可避免在shader里进行除法运算储存为xy
-                // z中是为级联淡出准备的参数f = 1 - square(1 - f) 
-                new Vector4(1f / _settings.maxDistance, 1f / _settings.distanceFade, 1f / (1f - f * f))
-            );
-
             SetKeywords(DirectionalFilterKeywords, (int) _settings.directional.filter - 1);
             SetKeywords(CascadeBlendKeywords, (int) _settings.directional.cascadeBlend - 1);
-            _buffer.SetGlobalVector(ShadowAtlasSizeId, new Vector4(atlasSize, 1f / atlasSize)); //x纹理大小 //y纹素大小
             _buffer.EndSample(BufferName);
             ExecuteBuffer();
         }
+
+        void RenderOtherShadows() {
+            int atlasSize = (int) _settings.other.atlasSize;
+            _atlasSizes.z = atlasSize;
+            _atlasSizes.w = 1f / atlasSize;
+            //使用纹理的property ID 作为参数 声明需要commendBuffer创建一张正方形纹理
+            _buffer.GetTemporaryRT(OtherShadowAtlasId, atlasSize, atlasSize
+                , 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
+
+            //开始渲染阴影纹理
+            _buffer.SetRenderTarget(OtherShadowAtlasId, RenderBufferLoadAction.DontCare,
+                RenderBufferStoreAction.Store);
+            _buffer.ClearRenderTarget(true, false, Color.clear);
+            _buffer.BeginSample(BufferName);
+            ExecuteBuffer();
+
+            int tiles = _shadowedOtherLightCount;
+            //分割数量应是二的幂数 这样重视可以进行整数除法
+            //否则会遇到不对齐的问题浪费吞吐空间
+            int split = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
+            int tileSize = atlasSize / split;
+
+            for (int i = 0; i < _shadowedDirLightCount; i++) { }
+
+            _buffer.SetGlobalMatrixArray(OtherShadowMatricesId, OtherShadowMatrices);
+            //   _buffer.SetGlobalFloat(ShadowDistanceId, _settings.maxDistance);
+
+
+            //此处阴影淡出分为两部分 一个是阴影最远距离的淡入参数存储为xy只影响与最大距离相关的淡入淡出，另一个是最大级联两侧的淡入淡出
+
+            SetKeywords(OtherFilterKeywords, (int) _settings.other.filter - 1);
+            _buffer.EndSample(BufferName);
+            ExecuteBuffer();
+        }
+
 
         /// <summary>
         /// 向GPU传输shadow所需要的数据
@@ -333,6 +402,10 @@ namespace CustomRP.Runtime {
 
         public void Cleanup() {
             _buffer.ReleaseTemporaryRT(DirShadowAtlasId);
+            if (_shadowedOtherLightCount > 0) {
+                _buffer.ReleaseTemporaryRT(OtherShadowAtlasId);
+            }
+
             ExecuteBuffer();
         }
     }

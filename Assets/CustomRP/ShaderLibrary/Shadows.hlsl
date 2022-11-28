@@ -172,7 +172,7 @@ float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowD
     #endif
 
     float shadow;
-    if (directional.strength * global.strength <= 0.0)
+    if (directional.strength * global.strength <= 0.0) //是否超过了阴影距离之类的不需要渲染实时阴影
     {
         shadow = GetBakedShadow(global.shadowMask, directional.shadowMaskChannel, abs(directional.strength));
     }
@@ -225,7 +225,7 @@ ShadowData GetShadowData(Surface surfaceWS)
             break;
         }
     }
-    if (i == _CascadeCount) //如果超出了最终的级联则不应该有阴影
+    if (i == _CascadeCount && _CascadeCount > 0) //如果超出了最终的级联则不应该有阴影
     {
         data.strength = 0.0;
     }
@@ -244,6 +244,13 @@ ShadowData GetShadowData(Surface surfaceWS)
     return data;
 }
 
+float GetOtherShadow(
+    OtherShadowData other, ShadowData global, Surface surfaceWS
+)
+{
+    return 1.0;
+}
+
 
 float GetOtherShadowAttenuation(
     OtherShadowData other, ShadowData global, Surface surfaceWS
@@ -254,15 +261,18 @@ float GetOtherShadowAttenuation(
     #endif
 
     float shadow;
-    if (other.strength > 0.0)
+    if (other.strength * global.strength <= 0.0) //是否超过了阴影距离之类的不需要渲染实时阴影
     {
         shadow = GetBakedShadow(
-            global.shadowMask, other.shadowMaskChannel, other.strength
+            global.shadowMask, other.shadowMaskChannel, abs(other.strength)
         );
     }
     else
     {
-        shadow = 1.0;
+        shadow = GetOtherShadow(other, global, surfaceWS);
+        shadow = MixBakedAndRealtimeShadows(
+            global, shadow, other.shadowMaskChannel, other.strength
+        );
     }
     return shadow;
 }

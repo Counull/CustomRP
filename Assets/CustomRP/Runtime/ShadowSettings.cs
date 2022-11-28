@@ -26,10 +26,6 @@ namespace CustomRP.Runtime {
         }
 
 
-        [Min(0.001f)] public float maxDistance = 100f;
-        [Range(0.001f, 1f)] public float distanceFade = 0.1f;
-
-
         [System.Serializable]
         public struct Directional {
             public TextureSize atlasSize;
@@ -38,9 +34,21 @@ namespace CustomRP.Runtime {
             [Range(0f, 1f)] public float cascadeRatio1, cascadeRatio2, cascadeRatio3;
             [Range(0.001f, 1f)] public float cascadeFade;
             public CascadeBlendMode cascadeBlend;
+
             public Vector3 CascadeRatios =>
                 new Vector3(cascadeRatio1, cascadeRatio2, cascadeRatio3);
         }
+
+
+        [System.Serializable]
+        public struct Other {
+            public TextureSize atlasSize;
+            public FilterMode filter;
+        }
+
+
+        [Min(0.001f)] public float maxDistance = 100f;
+        [Range(0.001f, 1f)] public float distanceFade = 0.1f;
 
         public Directional directional = new Directional {
             atlasSize = TextureSize._1024,
@@ -51,6 +59,11 @@ namespace CustomRP.Runtime {
             cascadeRatio3 = 0.5f,
             cascadeFade = 0.1f,
             cascadeBlend = CascadeBlendMode.Hard
+        };
+
+        public Other other = new Other {
+            atlasSize = TextureSize._1024,
+            filter = FilterMode.PCF2x2
         };
     }
 }
