@@ -145,6 +145,7 @@ namespace CustomRP.Runtime {
                 _shadowedDirLightCount < MaxShadowedDirectionalLightCount &&
                 light.shadows != LightShadows.None && light.shadowStrength > 0f
             ) {
+                
                 float maskChannel = -1;
                 LightBakingOutput lightBaking = light.bakingOutput;
                 if (
