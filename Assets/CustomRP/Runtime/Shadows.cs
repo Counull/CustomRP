@@ -156,6 +156,7 @@ namespace CustomRP.Runtime {
                     maskChannel = lightBaking.occlusionMaskChannel;
                 }
 
+                
                 if (!_cullingResults.GetShadowCasterBounds(
                         visibleLightIndex, out Bounds b
                     )) {
